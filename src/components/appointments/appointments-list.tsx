@@ -65,7 +65,7 @@ export default function AppointmentsList() {
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>

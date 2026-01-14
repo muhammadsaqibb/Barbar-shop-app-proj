@@ -59,7 +59,7 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm shadow-lg">
+    <Card className="w-full max-w-sm shadow-lg border-border/20">
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Login</CardTitle>
         <CardDescription>Enter your email below to login to your account.</CardDescription>
