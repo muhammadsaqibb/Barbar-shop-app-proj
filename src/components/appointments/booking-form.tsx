@@ -49,7 +49,7 @@ export default function BookingForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
+    if (!user || !user.name) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
       return;
     }
@@ -60,7 +60,7 @@ export default function BookingForm() {
         date: format(values.date, 'PPP'),
         time: values.time,
       };
-      await addAppointment(appointmentData, user.uid);
+      await addAppointment(appointmentData, user.uid, user.name);
       toast({
         title: 'Appointment Booked!',
         description: `Your ${values.service} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,

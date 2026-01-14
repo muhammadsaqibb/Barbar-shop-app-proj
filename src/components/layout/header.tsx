@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LifeBuoy, LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
@@ -36,6 +36,11 @@ export default function Header() {
       <Button variant="ghost" asChild>
         <Link href="/my-appointments">My Appointments</Link>
       </Button>
+      {user?.role === 'admin' && (
+        <Button variant="ghost" asChild>
+            <Link href="/admin/dashboard">Admin Dashboard</Link>
+        </Button>
+      )}
     </>
   )
 
@@ -84,6 +89,14 @@ export default function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                   {user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem>
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Profile</span>

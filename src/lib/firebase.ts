@@ -18,7 +18,8 @@ import {
   where,
   getDocs,
   Timestamp,
-  orderBy
+  orderBy,
+  updateDoc
 } from "firebase/firestore";
 import type { AppUser, Appointment } from "@/types";
 
@@ -48,7 +49,7 @@ export const createUserDocument = async (user: User, name: string) => {
       uid: user.uid,
       email: user.email,
       name: name,
-      role: 'client',
+      role: 'client', // Default role is client
     };
     await setDoc(userRef, userData);
     await updateProfile(user, { displayName: name });
@@ -78,10 +79,11 @@ export const signOut = async (): Promise<void> => {
   return firebaseSignOut(auth);
 };
 
-export const addAppointment = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status' | 'clientId'>, clientId: string) => {
+export const addAppointment = async (appointmentData: Omit<Appointment, 'id' | 'createdAt' | 'status' | 'clientId' | 'clientName'>, clientId: string, clientName: string) => {
   await addDoc(appointmentsCollection, {
     ...appointmentData,
     clientId,
+    clientName,
     status: 'pending',
     createdAt: Timestamp.now(),
   });
@@ -95,4 +97,25 @@ export const getUserAppointments = async (clientId: string): Promise<Appointment
   );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+};
+
+export const getAllAppointments = async (): Promise<Appointment[]> => {
+    const q = query(appointmentsCollection, orderBy('createdAt', 'desc'));
+    const querySnapshot = await getDocs(q);
+    
+    const appointments = await Promise.all(querySnapshot.docs.map(async (doc) => {
+        const appointment = { id: doc.id, ...doc.data() } as Appointment;
+        if (!appointment.clientName) {
+            const user = await getUserDocument(appointment.clientId);
+            appointment.clientName = user?.name || 'Unknown';
+        }
+        return appointment;
+    }));
+
+    return appointments;
+};
+
+export const updateAppointmentStatus = async (appointmentId: string, status: 'confirmed' | 'cancelled') => {
+    const appointmentRef = doc(db, 'appointments', appointmentId);
+    await updateDoc(appointmentRef, { status });
 };
