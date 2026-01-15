@@ -1,4 +1,5 @@
 export interface AppUser {
+  id?: string; // from firestore doc id
   uid: string;
   email: string | null;
   name: string | null;
@@ -7,7 +8,8 @@ export interface AppUser {
 
 export interface Service {
   id: string;
-  name: string;
+  name:string;
+  isPackage: boolean;
   price: number;
   duration: number; // in minutes
   description?: string;
@@ -16,20 +18,19 @@ export interface Service {
 export interface Barber {
   id: string;
   name: string;
-  services: string[]; // array of service IDs
 }
 
 export interface Appointment {
   id: string;
   clientId: string;
-  clientName?: string;
-  services: Service[];
+  clientName: string | null;
+  services: { id: string, name: string, price: number, duration: number }[];
   totalPrice: number;
   totalDuration: number;
   date: string;
   time: string;
-  barberId?: string;
-  notes?: string;
+  barberId: string | null;
+  notes: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  createdAt: number; // Using number for timestamp (Date.getTime())
+  createdAt: any;
 }

@@ -14,35 +14,53 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useFirebase } from '@/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import type { AppUser } from '@/types';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
 });
 
 export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { auth, firestore } = useFirebase();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
       email: '',
+      password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-      signIn(values.name, values.email);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const firebaseUser = userCredential.user;
+
+      await updateProfile(firebaseUser, { displayName: values.name });
+      
+      const userDocRef = doc(firestore, 'users', firebaseUser.uid);
+      const newUser: Omit<AppUser, 'id'> = {
+        uid: firebaseUser.uid,
+        name: values.name,
+        email: values.email,
+        role: 'client',
+      };
+      await setDoc(userDocRef, newUser);
+
       toast({
         title: 'Registration Successful',
         description: 'Your account has been created.',
@@ -89,6 +107,19 @@ export default function RegisterForm() {
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="name@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

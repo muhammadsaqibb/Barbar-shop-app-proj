@@ -1,40 +1,24 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '../auth-provider';
 import type { Appointment } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '../ui/skeleton';
-import { Calendar, Clock, Tag } from 'lucide-react';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 export default function AppointmentsList() {
   const { user } = useAuth();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { firestore } = useFirebase();
 
-  useEffect(() => {
-    if (user) {
-      const fetchAppointments = async () => {
-        try {
-          setLoading(true);
-          const storedAppointments = localStorage.getItem('appointments');
-          if (storedAppointments) {
-            const allAppointments: Appointment[] = JSON.parse(storedAppointments);
-            const userAppointments = allAppointments.filter(apt => apt.clientId === user.uid);
-            setAppointments(userAppointments);
-          }
-          setError(null);
-        } catch (err) {
-          setError('Failed to fetch appointments.');
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchAppointments();
-    }
-  }, [user]);
+  const appointmentsCollectionRef = useMemoFirebase(
+    () => (user ? query(collection(firestore, 'appointments'), where('clientId', '==', user.uid)) : null),
+    [firestore, user]
+  );
+
+  const { data: appointments, isLoading: loading, error } = useCollection<Appointment>(appointmentsCollectionRef);
 
   const getStatusVariant = (status: Appointment['status']) => {
     switch (status) {
@@ -44,6 +28,8 @@ export default function AppointmentsList() {
         return 'default';
       case 'cancelled':
         return 'destructive';
+      case 'completed':
+        return 'outline'
       default:
         return 'outline';
     }
@@ -60,10 +46,10 @@ export default function AppointmentsList() {
   }
 
   if (error) {
-    return <p className="text-destructive text-center">{error}</p>;
+    return <p className="text-destructive text-center">{error.message}</p>;
   }
 
-  if (appointments.length === 0) {
+  if (!appointments || appointments.length === 0) {
     return <p className="text-muted-foreground text-center">You have no appointments scheduled.</p>;
   }
 
@@ -72,7 +58,7 @@ export default function AppointmentsList() {
         <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead>Service</TableHead>
+                <TableHead>Service(s)</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
@@ -82,8 +68,8 @@ export default function AppointmentsList() {
             <TableBody>
                 {appointments.map((apt) => (
                 <TableRow key={apt.id}>
-                    <TableCell className="font-medium">{apt.service}</TableCell>
-                    <TableCell>PKR {apt.price?.toLocaleString()}</TableCell>
+                    <TableCell className="font-medium">{apt.services.map(s => s.name).join(', ')}</TableCell>
+                    <TableCell>PKR {apt.totalPrice?.toLocaleString()}</TableCell>
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{apt.time}</TableCell>
                     <TableCell className="text-right">

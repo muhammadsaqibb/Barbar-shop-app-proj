@@ -21,13 +21,13 @@ import { CalendarIcon, Scissors, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import type { Appointment, Service, Barber } from '@/types';
+import type { Service, Barber } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
-import { useCollection, useFirebase, useUser, useMemoFirebase } from '@/firebase';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
+import { useAuth } from '../auth-provider';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -52,7 +52,7 @@ interface BookingFormProps {
 }
 
 export default function BookingForm({ showPackagesOnly = false }: BookingFormProps) {
-  const { user } = useUser();
+  const { user } = useAuth();
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -66,8 +66,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     [firestore]
   );
 
-  const { data: servicesData, loading: servicesLoading, error: servicesError } = useCollection<Service>(servicesCollectionRef);
-  const { data: barbersData, loading: barbersLoading, error: barbersError } = useCollection<Barber>(barbersCollectionRef);
+  const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useCollection<Service>(servicesCollectionRef);
+  const { data: barbersData, isLoading: barbersLoading, error: barbersError } = useCollection<Barber>(barbersCollectionRef);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -82,7 +82,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const packages = allServices.filter(s => s.isPackage);
   const services = allServices.filter(s => !s.isPackage);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !user.uid || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
       return;
@@ -100,31 +100,46 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
     const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
 
-    const appointmentsCollection = collection(firestore, 'appointments');
+    try {
+      await addDoc(collection(firestore, 'appointments'), {
+        clientId: user.uid,
+        clientName: user.name || user.email,
+        services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
+        totalPrice,
+        totalDuration,
+        date: format(values.date, 'PPP'),
+        time: values.time,
+        barberId: values.barberId === 'any' ? null : values.barberId,
+        notes: values.notes || '',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      });
 
-    addDocumentNonBlocking(appointmentsCollection, {
-      clientId: user.uid,
-      clientName: user.displayName || user.email,
-      services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
-      totalPrice,
-      totalDuration,
-      date: format(values.date, 'PPP'),
-      time: values.time,
-      barberId: values.barberId === 'any' ? null : values.barberId,
-      notes: values.notes || '',
-      status: 'pending',
-      createdAt: serverTimestamp(),
-    });
+      toast({
+        title: 'Appointment Booked!',
+        description: `Your appointment is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+      });
+      form.reset();
+    } catch(e) {
+       toast({
+        variant: 'destructive',
+        title: 'Booking Failed',
+        description: 'An unexpected error occurred.',
+      });
+    }
 
-    toast({
-      title: 'Appointment Booked!',
-      description: `Your appointment is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
-    });
-    form.reset();
     setLoading(false);
   }
 
   const itemsToDisplay = showPackagesOnly ? packages : services;
+  const selectedServices = form.watch('services') || [];
+
+  const handleServiceSelect = (serviceId: string, isSelected: boolean) => {
+    const newSelectedServices = isSelected
+      ? [...selectedServices, serviceId]
+      : selectedServices.filter(id => id !== serviceId);
+    form.setValue('services', newSelectedServices, { shouldValidate: true });
+  };
 
   if (servicesLoading) {
     return <p>Loading services...</p>;
@@ -137,7 +152,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
+         <FormField
           control={form.control}
           name="services"
           render={({ field }) => (
@@ -148,30 +163,24 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                   Select one or more {showPackagesOnly ? 'packages' : 'services'}.
                 </FormDescription>
               </div>
-              {itemsToDisplay.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {itemsToDisplay.map((item) => (
-                    <ServiceCard
-                      key={item.id}
-                      service={item}
-                      isSelected={field.value?.includes(item.id) || false}
-                      onSelect={(checked) => {
-                        const currentValue = field.value || [];
-                        const newValue = checked
-                          ? [...currentValue, item.id]
-                          : currentValue.filter((value) => value !== item.id);
-                        field.onChange(newValue);
-                      }}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
-              )}
+                {itemsToDisplay.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {itemsToDisplay.map((item) => (
+                      <ServiceCard
+                        key={item.id}
+                        service={item}
+                        isSelected={selectedServices.includes(item.id)}
+                        onSelect={(checked) => handleServiceSelect(item.id, checked)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
+                )}
               <FormMessage />
             </FormItem>
-          )}
-        />
+           )}
+          />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormField
