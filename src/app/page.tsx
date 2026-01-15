@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, DollarSign, ArrowRight } from "lucide-react";
+import { Calendar, DollarSign, ArrowRight, Settings, User, History } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -33,18 +33,39 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
           <ActionCard
             href="/book"
-            icon={<Calendar className="h-8 w-8 text-white" />}
-            title="Book Appointment"
-            description="Schedule a new consultation, check-up, or procedure."
+            icon={<Calendar className="h-6 w-6 text-white" />}
+            title="Book"
+            description="Schedule a new appointment."
           />
           <ActionCard
             href="#"
-            icon={<DollarSign className="h-8 w-8 text-white" />}
-            title="Manage Expenses"
-            description="Track and manage your expenses. (Coming Soon)"
+            icon={<DollarSign className="h-6 w-6 text-white" />}
+            title="Expenses"
+            description="Manage your expenses."
+            disabled
+          />
+          <ActionCard
+            href="#"
+            icon={<History className="h-6 w-6 text-white" />}
+            title="History"
+            description="View your past activity."
+            disabled
+          />
+          <ActionCard
+            href="#"
+            icon={<User className="h-6 w-6 text-white" />}
+            title="Profile"
+            description="Update your profile."
+            disabled
+          />
+          <ActionCard
+            href="#"
+            icon={<Settings className="h-6 w-6 text-white" />}
+            title="Settings"
+            description="Adjust your preferences."
             disabled
           />
         </div>
@@ -63,23 +84,17 @@ interface ActionCardProps {
 
 function ActionCard({ href, icon, title, description, disabled }: ActionCardProps) {
   const content = (
-      <Card className={`group w-full h-full text-left shadow-lg hover:shadow-2xl transition-shadow duration-300 ${disabled ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}>
-      <CardContent className="p-6 flex flex-col items-start gap-4">
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-xl transition-shadow duration-300 ${disabled ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}>
+      <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-black`}>
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="text-xl font-bold font-headline text-gray-900">{title}</h3>
-          <p className="mt-2 text-gray-600">{description}</p>
+          <h3 className="text-lg font-bold font-headline text-gray-900">{title}</h3>
+          <p className="mt-1 text-xs text-gray-600">{description}</p>
         </div>
-        {!disabled && (
-          <div className="mt-4 flex items-center font-semibold text-black">
-            Go to {title}
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </div>
-        )}
         {disabled && (
-            <div className="mt-4 text-sm font-semibold text-gray-400">
+            <div className="mt-2 text-xs font-semibold text-gray-400">
                 Coming Soon
             </div>
         )}
@@ -88,11 +103,11 @@ function ActionCard({ href, icon, title, description, disabled }: ActionCardProp
   );
 
   if (disabled) {
-    return <div className="cursor-not-allowed">{content}</div>
+    return <div className="cursor-not-allowed h-full">{content}</div>
   }
 
   return (
-    <Link href={href} className="flex">
+    <Link href={href} className="flex h-full">
         {content}
     </Link>
   );
