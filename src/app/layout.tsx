@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/components/auth-provider';
 import Header from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 import { Oswald, Lato } from 'next/font/google';
+import { AuthProvider } from '@/components/auth-provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' });
 const lato = Lato({
@@ -25,13 +26,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${oswald.variable} ${lato.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-          </div>
-          <Toaster />
-        </AuthProvider>
+        <FirebaseClientProvider>
+          <AuthProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">{children}</main>
+            </div>
+            <Toaster />
+          </AuthProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
