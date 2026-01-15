@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors } from 'lucide-react';
+import { CalendarIcon, Scissors, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../auth-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ import { useState } from 'react';
 import type { Appointment } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
+import { Input } from '../ui/input';
 
 const services = [
     { id: 'classic-haircut', name: 'Classic Haircut', price: 800 },
@@ -77,6 +78,7 @@ export default function BookingForm() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -132,6 +134,10 @@ export default function BookingForm() {
     }
   }
 
+  const filteredServices = services.filter(service =>
+    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -146,8 +152,18 @@ export default function BookingForm() {
                   Select one or more services.
                 </FormDescription>
               </div>
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search for a service..."
+                  className="pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {services.map((item) => (
+                {filteredServices.map((item) => (
                     <FormField
                         key={item.id}
                         control={form.control}
@@ -174,6 +190,9 @@ export default function BookingForm() {
                     />
                 ))}
               </div>
+              {filteredServices.length === 0 && (
+                <p className="text-center text-muted-foreground mt-4">No services found.</p>
+              )}
               <FormMessage />
             </FormItem>
           )}
