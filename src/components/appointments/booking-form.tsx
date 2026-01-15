@@ -40,8 +40,10 @@ const services = [
     { id: 'kids-haircut', name: 'Kids Haircut', price: 500 },
     { id: 'senior-citizen-cut', name: 'Senior Citizen Cut', price: 500 },
     { id: 'hot-towel-beard-shave', name: 'Hot Towel Beard Shave', price: 800 },
-    { id: 'royal-grooming-package', name: 'Royal Grooming Package', price: 3000 },
-    { id: 'luxury-haircut-experience', name: 'Luxury Haircut Experience', price: 2000 },
+    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
+    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
+    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
+    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
     { id: 'beard-styling-with-products', name: 'Beard Styling with Products', price: 300 },
     { id: 'steam-facial', name: 'Steam Facial', price: 1200 },
     { id: 'black-mask-facial', name: 'Black Mask Facial', price: 1500 },
@@ -135,7 +137,8 @@ export default function BookingForm() {
   }
 
   const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase())
+    service.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -156,7 +159,7 @@ export default function BookingForm() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search for a service..."
+                  placeholder="Search for a service or package..."
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -264,7 +267,7 @@ export default function BookingForm() {
 }
 
 interface ServiceCardProps {
-    service: { id: string, name: string, price: number };
+    service: { id: string, name: string, price: number, description?: string };
     isSelected: boolean;
     onSelect: (checked: boolean) => void;
 }
@@ -273,18 +276,23 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
     return (
         <Card 
             className={cn(
-                "cursor-pointer transition-all duration-200 hover:animate-shake",
+                "cursor-pointer transition-all duration-200 hover:animate-shake h-full flex flex-col",
                 isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-md"
             )}
             onClick={() => onSelect(!isSelected)}
         >
-            <CardContent className="p-4 relative">
-                <div className="flex flex-col items-center text-center gap-2">
+            <CardContent className="p-4 relative flex-1 flex flex-col">
+                <div className="flex flex-col items-center text-center gap-2 flex-1">
                     <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
                         <Scissors className="h-6 w-6" />
                     </div>
                     <p className="font-semibold text-sm leading-tight">{service.name}</p>
-                    <p className="text-xs text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
+                    {service.description && (
+                        <p className="text-xs text-muted-foreground">{service.description}</p>
+                    )}
+                </div>
+                <div className="mt-auto pt-2 text-center">
+                   <p className="text-sm text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
                 </div>
                 <Checkbox
                     checked={isSelected}
