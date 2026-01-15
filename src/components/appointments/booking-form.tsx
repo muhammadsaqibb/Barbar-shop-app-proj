@@ -19,10 +19,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { addAppointment } from '@/lib/firebase';
 import { useAuth } from '../auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import type { Appointment } from '@/types';
 
 const services = ['Consultation', 'Check-up', 'Procedure', 'Follow-up'];
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
@@ -55,12 +55,23 @@ export default function BookingForm() {
     }
     setLoading(true);
     try {
-      const appointmentData = {
+      const storedAppointments = localStorage.getItem('appointments');
+      const appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
+      
+      const newAppointment: Appointment = {
+        id: new Date().toISOString(),
+        clientId: user.uid,
+        clientName: user.name,
         service: values.service,
         date: format(values.date, 'PPP'),
         time: values.time,
+        status: 'pending',
+        createdAt: new Date().getTime(),
       };
-      await addAppointment(appointmentData, user.uid, user.name);
+
+      appointments.push(newAppointment);
+      localStorage.setItem('appointments', JSON.stringify(appointments));
+
       toast({
         title: 'Appointment Booked!',
         description: `Your ${values.service} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,

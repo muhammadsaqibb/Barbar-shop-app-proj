@@ -12,7 +12,7 @@ export default function AdminDashboardPage() {
                         <CardDescription>Manage all client appointments.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <AppointmentsTable />
+                       <p className="text-center text-muted-foreground">Offline appointment management is not yet implemented.</p>
                     </CardContent>
                 </Card>
             </div>

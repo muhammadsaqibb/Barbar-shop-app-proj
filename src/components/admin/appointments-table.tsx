@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getAllAppointments } from '@/lib/firebase';
 import type { Appointment } from '@/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +15,10 @@ export default function AppointmentsTable() {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const allAppointments = await getAllAppointments();
-      setAppointments(allAppointments);
+      const storedAppointments = localStorage.getItem('appointments');
+      if (storedAppointments) {
+        setAppointments(JSON.parse(storedAppointments));
+      }
       setError(null);
     } catch (err) {
       setError('Failed to fetch appointments.');

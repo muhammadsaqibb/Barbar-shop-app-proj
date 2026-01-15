@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface AppUser {
   uid: string;
   email: string | null;
@@ -15,5 +13,5 @@ export interface Appointment {
   date: string;
   time: string;
   status: 'pending' | 'confirmed' | 'cancelled';
-  createdAt: Timestamp;
+  createdAt: number; // Using number for timestamp (Date.getTime())
 }

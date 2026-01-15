@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { updateAppointmentStatus } from "@/lib/firebase";
 import type { Appointment } from "@/types";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
@@ -20,7 +19,11 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
     const handleUpdateStatus = async (status: 'confirmed' | 'cancelled') => {
         setLoading(status === 'confirmed' ? 'confirm' : 'cancel');
         try {
-            await updateAppointmentStatus(appointmentId, status);
+            const storedAppointments = localStorage.getItem('appointments');
+            let appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
+            appointments = appointments.map(apt => apt.id === appointmentId ? { ...apt, status } : apt);
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+
             toast({
                 title: "Status Updated",
                 description: `Appointment has been ${status}.`,
