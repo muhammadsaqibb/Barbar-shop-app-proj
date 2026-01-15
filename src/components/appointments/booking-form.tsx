@@ -27,13 +27,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
 
-const packages = [
-    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
-    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
-    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
-    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
-];
-
 const services = [
     { id: 'classic-haircut', name: 'Classic Haircut', price: 800 },
     { id: 'skin-fade', name: 'Skin Fade', price: 1000 },
@@ -61,6 +54,13 @@ const services = [
     { id: 'styling-gel-wax', name: 'Styling Gel / Wax', price: 150 },
     { id: 'hair-color-touch-up', name: 'Hair Color Touch-Up', price: 1500 },
     { id: 'eyebrow-trimming', name: 'Eyebrow Trimming', price: 200 },
+];
+
+const packages = [
+    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
+    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
+    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
+    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
 ];
 
 const allServices = [...packages, ...services];
@@ -153,40 +153,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const renderServiceList = (items: (typeof services) | (typeof packages), formField: any) => {
-    if (items.length === 0) return null;
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {items.map((item) => (
-            <FormField
-                key={item.id}
-                control={form.control}
-                name="services"
-                render={() => (
-                    <FormItem>
-                        <FormControl>
-                            <ServiceCard
-                                service={item}
-                                isSelected={formField.value?.includes(item.id) || false}
-                                onSelect={(checked) => {
-                                    return checked
-                                    ? formField.onChange([...(formField.value || []), item.id])
-                                    : formField.onChange(
-                                        formField.value?.filter(
-                                            (value) => value !== item.id
-                                        )
-                                        )
-                                }}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
-        ))}
-      </div>
-    )
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -213,8 +179,21 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
               </div>
 
               {filteredServices.length > 0 ? (
-                <div>
-                  {renderServiceList(filteredServices, field)}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {filteredServices.map((item) => (
+                        <ServiceCard
+                            key={item.id}
+                            service={item}
+                            isSelected={field.value?.includes(item.id) || false}
+                            onSelect={(checked) => {
+                                const currentValue = field.value || [];
+                                const newValue = checked
+                                ? [...currentValue, item.id]
+                                : currentValue.filter((value) => value !== item.id);
+                                field.onChange(newValue);
+                            }}
+                        />
+                    ))}
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground mt-4">No services found.</p>
@@ -321,6 +300,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
                 </div>
                 <Checkbox
                     checked={isSelected}
+                    onCheckedChange={onSelect}
                     className="absolute top-2 right-2"
                     aria-label={`Select ${service.name}`}
                 />
@@ -328,7 +308,3 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
         </Card>
     )
 }
-
-    
-
-    
