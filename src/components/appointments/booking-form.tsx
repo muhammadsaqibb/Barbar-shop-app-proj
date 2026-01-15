@@ -17,13 +17,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Scissors } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Appointment } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '../ui/card';
 
 const services = [
     { id: 'classic-haircut', name: 'Classic Haircut', price: 800 },
@@ -137,7 +138,7 @@ export default function BookingForm() {
         <FormField
           control={form.control}
           name="services"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
               <div className="mb-4">
                 <FormLabel className="text-base">Services</FormLabel>
@@ -145,44 +146,32 @@ export default function BookingForm() {
                   Select one or more services.
                 </FormDescription>
               </div>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {services.map((item) => (
-                  <FormField
-                    key={item.id}
-                    control={form.control}
-                    name="services"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={item.id}
-                          className="flex flex-row items-center justify-between rounded-lg border p-4"
-                        >
-                          <div className='space-y-0.5'>
-                            <FormLabel className="text-sm font-medium">
-                              {item.name}
-                            </FormLabel>
-                            <FormDescription>
-                              PKR {item.price.toLocaleString()}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), item.id])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
-                                    )
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )
-                    }}
-                  />
+                    <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="services"
+                        render={() => (
+                            <FormItem>
+                                <FormControl>
+                                    <ServiceCard
+                                        service={item}
+                                        isSelected={field.value?.includes(item.id) || false}
+                                        onSelect={(checked) => {
+                                            return checked
+                                            ? field.onChange([...(field.value || []), item.id])
+                                            : field.onChange(
+                                                field.value?.filter(
+                                                    (value) => value !== item.id
+                                                )
+                                                )
+                                        }}
+                                    />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
                 ))}
               </div>
               <FormMessage />
@@ -253,4 +242,37 @@ export default function BookingForm() {
       </form>
     </Form>
   );
+}
+
+interface ServiceCardProps {
+    service: { id: string, name: string, price: number };
+    isSelected: boolean;
+    onSelect: (checked: boolean) => void;
+}
+
+function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
+    return (
+        <Card 
+            className={cn(
+                "cursor-pointer transition-all duration-200",
+                isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-md"
+            )}
+            onClick={() => onSelect(!isSelected)}
+        >
+            <CardContent className="p-4 relative">
+                <div className="flex flex-col items-center text-center gap-2">
+                    <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
+                        <Scissors className="h-6 w-6" />
+                    </div>
+                    <p className="font-semibold text-sm leading-tight">{service.name}</p>
+                    <p className="text-xs text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
+                </div>
+                <Checkbox
+                    checked={isSelected}
+                    className="absolute top-2 right-2"
+                    aria-label={`Select ${service.name}`}
+                />
+            </CardContent>
+        </Card>
+    )
 }
