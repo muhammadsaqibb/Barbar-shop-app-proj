@@ -31,7 +31,10 @@ export default function Header() {
   const NavLinks = () => (
     <>
       <Button variant="ghost" asChild>
-        <Link href="/">Book Appointment</Link>
+        <Link href="/overview">Overview</Link>
+      </Button>
+      <Button variant="ghost" asChild>
+        <Link href="/book">Book Appointment</Link>
       </Button>
       <Button variant="ghost" asChild>
         <Link href="/my-appointments">My Appointments</Link>

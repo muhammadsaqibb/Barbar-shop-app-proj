@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, DollarSign, ArrowRight, Settings, User, History } from "lucide-react";
+import { Calendar, DollarSign, ArrowRight, Settings, User, History, LayoutDashboard } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -34,6 +34,12 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+          <ActionCard
+            href="/overview"
+            icon={<LayoutDashboard className="h-6 w-6 text-white" />}
+            title="Overview"
+            description="View key stats and charts."
+          />
           <ActionCard
             href="/book"
             icon={<Calendar className="h-6 w-6 text-white" />}
