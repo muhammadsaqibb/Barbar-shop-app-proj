@@ -52,7 +52,7 @@ export default function Home() {
             description="View our special packages."
           />
            <ActionCard
-            href="#"
+            href="/my-appointments"
             icon={<Sparkles className="h-6 w-6" />}
             title="Specials"
             description="Check out our offers."
@@ -79,7 +79,7 @@ interface ActionCardProps {
 
 function ActionCard({ href, icon, title, description, disabled }: ActionCardProps) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'}`}>
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:animate-shake ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
