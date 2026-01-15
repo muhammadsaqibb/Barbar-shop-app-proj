@@ -74,7 +74,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     defaultValues: {
       services: [],
       notes: '',
-      barberId: '',
+      barberId: 'any',
     }
   });
 
@@ -110,7 +110,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       totalDuration,
       date: format(values.date, 'PPP'),
       time: values.time,
-      barberId: values.barberId || null,
+      barberId: values.barberId === 'any' ? null : values.barberId,
       notes: values.notes || '',
       status: 'pending',
       createdAt: serverTimestamp(),
@@ -152,16 +152,28 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
               {itemsToDisplay.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {itemsToDisplay.map((item) => (
-                      <ServiceCard
+                      <FormField
                           key={item.id}
-                          service={item}
-                          isSelected={field.value?.includes(item.id) || false}
-                          onSelect={(checked) => {
-                              const currentValue = field.value || [];
-                              const newValue = checked
-                              ? [...currentValue, item.id]
-                              : currentValue.filter((value) => value !== item.id);
-                              field.onChange(newValue);
+                          control={form.control}
+                          name="services"
+                          render={({ field }) => {
+                              return (
+                                  <FormItem>
+                                      <FormControl>
+                                           <ServiceCard
+                                              service={item}
+                                              isSelected={field.value?.includes(item.id) || false}
+                                              onSelect={(checked) => {
+                                                  const currentValue = field.value || [];
+                                                  const newValue = checked
+                                                  ? [...currentValue, item.id]
+                                                  : currentValue.filter((value) => value !== item.id);
+                                                  field.onChange(newValue);
+                                              }}
+                                          />
+                                      </FormControl>
+                                  </FormItem>
+                              )
                           }}
                       />
                     ))}
@@ -246,7 +258,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">Any Barber</SelectItem>
+                  <SelectItem value="any">Any Barber</SelectItem>
                   {barbersLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
                   {barbersData?.map((barber) => (
                     <SelectItem key={barber.id} value={barber.id}>
