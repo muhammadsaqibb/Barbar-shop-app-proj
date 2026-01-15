@@ -81,7 +81,12 @@ const formSchema = z.object({
   time: z.string({ required_error: 'Please select a time.' }),
 });
 
-export default function BookingForm() {
+interface BookingFormProps {
+  showPackagesOnly?: boolean;
+}
+
+
+export default function BookingForm({ showPackagesOnly = false }: BookingFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -141,18 +146,20 @@ export default function BookingForm() {
     }
   }
 
-  const filteredServices = services.filter(service =>
+  const itemsToDisplay = showPackagesOnly ? packages : services;
+
+  const filteredServices = itemsToDisplay.filter(service =>
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const filteredPackages = packages.filter(pkg =>
+  const filteredPackages = showPackagesOnly ? [] : packages.filter(pkg =>
     pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (pkg.description && pkg.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
 
-  const renderServiceList = (items: typeof services, formField: any) => {
+  const renderServiceList = (items: (typeof services) | (typeof packages), formField: any) => {
     if (items.length === 0) return null;
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -194,12 +201,14 @@ export default function BookingForm() {
           name="services"
           render={({ field }) => (
             <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Services</FormLabel>
-                <FormDescription>
-                  Select one or more services or packages.
-                </FormDescription>
-              </div>
+              {!showPackagesOnly && (
+                <div className="mb-4">
+                  <FormLabel className="text-base">Services</FormLabel>
+                  <FormDescription>
+                    Select one or more services or packages.
+                  </FormDescription>
+                </div>
+              )}
               <div className="relative mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
@@ -218,11 +227,15 @@ export default function BookingForm() {
                 </div>
               )}
               
-              {filteredServices.length > 0 && (
+              {!showPackagesOnly && filteredServices.length > 0 && (
                 <div>
                      <h3 className="text-xl font-headline mb-4 text-center uppercase tracking-wider">Individual Services</h3>
                     {renderServiceList(filteredServices, field)}
                 </div>
+              )}
+
+              {showPackagesOnly && filteredServices.length > 0 && (
+                 renderServiceList(filteredServices, field)
               )}
 
               {filteredServices.length === 0 && filteredPackages.length === 0 && (

@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, ShoppingCart, GalleryHorizontal, User, Settings, Info, Briefcase, Sparkles, LayoutDashboard } from "lucide-react";
+import { Scissors, ShoppingCart, GalleryHorizontal, User, Settings, Info, Briefcase, Sparkles, LayoutDashboard, Package } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -44,6 +44,12 @@ export default function Home() {
             icon={<Scissors className="h-6 w-6" />}
             title="Book Cut"
             description="Schedule a new appointment."
+          />
+          <ActionCard
+            href="/packages"
+            icon={<Package className="h-6 w-6" />}
+            title="Packages"
+            description="View our special packages."
           />
           <ActionCard
             href="#"

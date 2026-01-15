@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
@@ -31,6 +31,9 @@ export default function Header() {
     <>
       <Button variant="ghost" asChild>
         <Link href="/overview">Overview</Link>
+      </Button>
+       <Button variant="ghost" asChild>
+        <Link href="/packages">Packages</Link>
       </Button>
       <Button variant="ghost" asChild>
         <Link href="/book">Book A Cut</Link>
@@ -100,6 +103,12 @@ export default function Header() {
                         </Link>
                         </DropdownMenuItem>
                     )}
+                     <DropdownMenuItem asChild>
+                        <Link href="/packages">
+                            <Package className="mr-2 h-4 w-4" />
+                            <span>Packages</span>
+                        </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem>
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
