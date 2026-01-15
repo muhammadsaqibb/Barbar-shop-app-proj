@@ -273,7 +273,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
     return (
         <Card 
             className={cn(
-                "cursor-pointer transition-all duration-200",
+                "cursor-pointer transition-all duration-200 hover:animate-shake",
                 isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-md"
             )}
             onClick={() => onSelect(!isSelected)}
