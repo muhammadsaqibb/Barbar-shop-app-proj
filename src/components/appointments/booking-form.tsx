@@ -148,44 +148,31 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                   Select one or more {showPackagesOnly ? 'packages' : 'services'}.
                 </FormDescription>
               </div>
-              
               {itemsToDisplay.length > 0 ? (
-                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {itemsToDisplay.map((item) => (
-                      <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="services"
-                          render={({ field }) => {
-                              return (
-                                  <FormItem>
-                                      <FormControl>
-                                           <ServiceCard
-                                              service={item}
-                                              isSelected={field.value?.includes(item.id) || false}
-                                              onSelect={(checked) => {
-                                                  const currentValue = field.value || [];
-                                                  const newValue = checked
-                                                  ? [...currentValue, item.id]
-                                                  : currentValue.filter((value) => value !== item.id);
-                                                  field.onChange(newValue);
-                                              }}
-                                          />
-                                      </FormControl>
-                                  </FormItem>
-                              )
-                          }}
-                      />
-                    ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {itemsToDisplay.map((item) => (
+                    <ServiceCard
+                      key={item.id}
+                      service={item}
+                      isSelected={field.value?.includes(item.id) || false}
+                      onSelect={(checked) => {
+                        const currentValue = field.value || [];
+                        const newValue = checked
+                          ? [...currentValue, item.id]
+                          : currentValue.filter((value) => value !== item.id);
+                        field.onChange(newValue);
+                      }}
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
               )}
-              
               <FormMessage />
             </FormItem>
           )}
         />
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
