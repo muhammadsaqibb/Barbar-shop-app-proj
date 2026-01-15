@@ -96,24 +96,17 @@ export default {
           },
         },
         'shake': {
-          '10%, 90%': {
-            transform: 'translate3d(-1px, 0, 0)',
-          },
-          '20%, 80%': {
-            transform: 'translate3d(2px, 0, 0)',
-          },
-          '30%, 50%, 70%': {
-            transform: 'translate3d(-3px, 0, 0)',
-          },
-          '40%, 60%': {
-            transform: 'translate3d(3px, 0, 0)',
-          },
+          '0%': { transform: 'rotate(0.0deg)' },
+          '25%': { transform: 'rotate(1.5deg)' },
+          '50%': { transform: 'rotate(-1.5deg)' },
+          '75%': { transform: 'rotate(1.0deg)' },
+          '100%': { transform: 'rotate(0.0deg)' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+        'shake': 'shake 0.3s ease-in-out',
       },
     },
   },
