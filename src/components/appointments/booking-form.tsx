@@ -24,9 +24,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Appointment } from '@/types';
 
-const services = ['Consultation', 'Check-up', 'Procedure', 'Follow-up'];
+const services = ['Classic Haircut', 'Beard Trim & Shape-Up', 'Hot Towel Shave', 'Haircut & Shave Combo', 'Kids Cut'];
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 8;
+  const hour = Math.floor(i / 2) + 9; // Barbershops often open a bit later
   const minute = i % 2 === 0 ? '00' : '30';
   const period = hour < 12 ? 'AM' : 'PM';
   const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
@@ -135,7 +135,7 @@ export default function BookingForm() {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) => date < new Date() || date < new Date('1900-01-01')}
+                      disabled={(date) => date < new Date(new Date().toDateString())}
                       initialFocus
                     />
                   </PopoverContent>

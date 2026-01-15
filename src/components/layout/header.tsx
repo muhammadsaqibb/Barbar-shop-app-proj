@@ -33,14 +33,14 @@ export default function Header() {
         <Link href="/overview">Overview</Link>
       </Button>
       <Button variant="ghost" asChild>
-        <Link href="/book">Book Appointment</Link>
+        <Link href="/book">Book A Cut</Link>
       </Button>
       <Button variant="ghost" asChild>
         <Link href="/my-appointments">My Appointments</Link>
       </Button>
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
-            <Link href="/admin/dashboard">Admin Dashboard</Link>
+            <Link href="/admin/dashboard">Admin</Link>
         </Button>
       )}
     </>
@@ -58,11 +58,11 @@ export default function Header() {
   )
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background text-foreground">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm text-foreground">
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Logo />
-          <span className="font-bold">BookItEasy</span>
+          <span className="font-bold font-headline uppercase">The Gentleman's Cut</span>
         </Link>
         
         <div className="hidden md:flex flex-1 items-center space-x-2 text-sm font-medium">

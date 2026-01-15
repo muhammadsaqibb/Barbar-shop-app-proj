@@ -3,18 +3,18 @@ import './globals.css';
 import { AuthProvider } from '@/components/auth-provider';
 import Header from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
-import { Inter, Poppins } from 'next/font/google';
+import { Oswald, Lato } from 'next/font/google';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const poppins = Poppins({
+const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' });
+const lato = Lato({
   subsets: ['latin'],
-  weight: ['400', '600', '700'],
-  variable: '--font-poppins',
+  weight: ['400', '700'],
+  variable: '--font-lato',
 });
 
 export const metadata: Metadata = {
-  title: 'BookItEasy',
-  description: 'Client Appointment Booking System',
+  title: 'The Gentleman\'s Cut',
+  description: 'Online booking for your next haircut or shave.',
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${oswald.variable} ${lato.variable}`} suppressHydrationWarning>
       <body className="font-body antialiased">
         <AuthProvider>
           <div className="flex min-h-screen flex-col">

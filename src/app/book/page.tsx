@@ -14,13 +14,13 @@ export default function BookAppointmentPage() {
             <div className="mx-auto max-w-2xl">
                 <Card className="shadow-lg border-border/20">
                 <CardHeader>
-                    <CardTitle className="text-3xl font-headline text-center">
-                    Book an Appointment
+                    <CardTitle className="text-3xl font-headline text-center uppercase">
+                    Book Your Cut
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-center text-muted-foreground mb-6">
-                    Welcome, {user?.name || user?.email}! Fill out the form below to schedule your next appointment.
+                    Welcome, {user?.name || user?.email}! Fill out the form below to schedule your next visit.
                     </p>
                     <BookingForm />
                 </CardContent>
