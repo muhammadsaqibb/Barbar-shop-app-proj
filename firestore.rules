@@ -1,32 +1,20 @@
 /**
- * Core Philosophy: This ruleset enforces a strict user-ownership model. All data is scoped
- * to the authenticated user, meaning users can only access their own profile and their own
- * appointments. There is no concept of shared data or admin-level access directly within these
- * rules, adhering to a secure-by-default posture.
+ * Core Philosophy: This ruleset enforces a strict user-ownership model for appointments
+ * and user profiles, while allowing public read access for general data like services
+ * and barbers.
  *
- * Data Structure: Data is organized hierarchically under the `/users/{userId}` path. Each
- * user has a main profile document, and all their related data, such as appointments, are
- * stored in subcollections under their unique user ID. This structure simplifies security
- * by tying data ownership directly to the document path.
+ * Data Structure:
+ * - /users/{userId}: Private user profiles.
+ * - /appointments/{appointmentId}: Appointments, with access controlled by the `clientId` field.
+ * - /services/{serviceId}: Publicly readable services.
+ * - /barbers/{barberId}: Publicly readable barbers.
  *
  * Key Security Decisions:
- * - User Enumeration is Disallowed: The top-level `/users` collection cannot be listed,
- *   preventing malicious actors from scraping a list of all application users.
- * - Strict Path-Based Ownership: A user's access is determined by matching their Firebase
- *   Auth UID with the `{userId}` wildcard in the path. This is the primary security mechanism.
- * - No Admin Roles in Rules: Although the user schema contains a 'role' field, these rules
- *   do not grant any special privileges based on it. Any administrative functionality
- *   must be handled by a trusted backend server.
- *
- * Denormalization for Authorization: The `Appointment` documents contain a `clientId` field.
- * This field is denormalized to mirror the `{userId}` from the path. The rules enforce
- * that this `clientId` is correctly set on creation and is immutable, ensuring data
- * integrity and simplifying authorization logic without needing extra document reads.
- *
- * Structural Segregation: User profiles (`/users/{userId}`) are structurally separate
- * from their appointments (`/users/{userId}/appointments`). This clean separation ensures
- * that queries for one type of data do not inadvertently expose the other and allows for
- * distinct security rules for each data type.
+ * - User Enumeration is Disallowed: The top-level `/users` collection cannot be listed.
+ * - Strict Ownership for Sensitive Data: A user can only access their own profile and appointments.
+ * - Public Data is Read-Only for Clients: Services and barbers can be read by anyone but cannot be
+ *   modified by client applications.
+ * - No Admin Roles in Rules: Administrative functions must be handled by a trusted backend.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -35,60 +23,12 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
     // Helper Functions
     // ------------------------------------------------------------------------
-
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the authenticated user's UID matches the provided userId from the path.
-     * This is the fundamental check for user-owned documents.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * Combines ownership check with a check that the document already exists.
-     * CRITICAL for all update and delete operations to prevent modifying non-existent data.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * On create, validates that the user's profile document includes an `id` field
-     * that matches their auth UID, ensuring relational integrity from the start.
-     */
-    function hasValidUserId(userId) {
-      return request.resource.data.id == userId;
-    }
-
-    /**
-     * On update, ensures the `id` field within a user's profile document is immutable.
-     * This prevents re-assigning the profile to a different user.
-     */
-    function isUserIdImmutable() {
-      return request.resource.data.id == resource.data.id;
-    }
-
-    /**
-     * On create, validates that a new appointment's `clientId` field matches
-     * the owner's UID from the document path.
-     */
-    function hasValidClientId(userId) {
-      return request.resource.data.clientId == userId;
-    }
-
-    /**
-     * On update, ensures the `clientId` field within an appointment is immutable.
-     * This prevents re-assigning the appointment to a different user.
-     */
-    function isClientIdImmutable() {
-      return request.resource.data.clientId == resource.data.clientId;
     }
 
     // ------------------------------------------------------------------------
@@ -97,34 +37,39 @@ service cloud.firestore {
 
     /**
      * @description Manages user profile documents. Access is strictly limited to the document owner.
-     * @path /users/{userId}
-     * @allow (create) A signed-in user (UID: 'user123') can create their own profile at `/users/user123`.
-     * @deny (list) A signed-in user cannot list the entire `/users` collection to prevent user enumeration.
-     * @deny (get) A signed-in user (UID: 'user123') cannot read another user's profile at `/users/user456`.
-     * @principle Restricts access to a user's own data tree and validates relational integrity.
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.uid == userId;
+      allow update: if isOwner(userId) && request.resource.data.uid == resource.data.uid;
+      allow delete: if isOwner(userId);
+      // Deny listing all users.
       allow list: if false;
-      allow create: if isOwner(userId) && hasValidUserId(userId);
-      allow update: if isExistingOwner(userId) && isUserIdImmutable();
-      allow delete: if isExistingOwner(userId);
+    }
 
-      /**
-       * @description Manages appointment documents owned by a specific user.
-       * @path /users/{userId}/appointments/{appointmentId}
-       * @allow (create) A signed-in user (UID: 'user123') can create their own appointment at `/users/user123/appointments/appt_abc`.
-       * @allow (list) A signed-in user (UID: 'user123') can list all their appointments under `/users/user123/appointments`.
-       * @deny (update) A signed-in user (UID: 'user123') cannot update an appointment belonging to another user at `/users/user456/appointments/appt_xyz`.
-       * @principle Enforces document ownership for all operations and validates relational integrity via the `clientId` field.
-       */
-      match /appointments/{appointmentId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
-        allow create: if isOwner(userId) && hasValidClientId(userId);
-        allow update: if isExistingOwner(userId) && isClientIdImmutable();
-        allow delete: if isExistingOwner(userId);
-      }
+    /**
+     * @description Manages services. Publicly readable, but not writable from the client.
+     */
+    match /services/{serviceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Manages barbers. Publicly readable, but not writable from the client.
+     */
+    match /barbers/{barberId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+    
+    /**
+     * @description Manages appointment documents.
+     */
+    match /appointments/{appointmentId} {
+        allow get, list: if isSignedIn() && request.query.where[0][2] == request.auth.uid;
+        allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.clientId == request.auth.uid;
     }
   }
 }
