@@ -60,13 +60,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
-  useEffect(() => {
-    if (firestore) {
-      seedDatabase(firestore);
-    }
-  }, [firestore]);
-
-
   const servicesCollectionRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'services') : null),
     [firestore]
