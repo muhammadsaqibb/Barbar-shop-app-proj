@@ -73,6 +73,7 @@ export default function AppointmentsList() {
             <TableHeader>
                 <TableRow>
                 <TableHead>Service</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead className="text-right">Status</TableHead>
@@ -82,6 +83,7 @@ export default function AppointmentsList() {
                 {appointments.map((apt) => (
                 <TableRow key={apt.id}>
                     <TableCell className="font-medium">{apt.service}</TableCell>
+                    <TableCell>PKR {apt.price?.toLocaleString()}</TableCell>
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{apt.time}</TableCell>
                     <TableCell className="text-right">

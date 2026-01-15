@@ -73,6 +73,7 @@ export default function AppointmentsTable() {
                 <TableRow>
                 <TableHead>Client</TableHead>
                 <TableHead>Service</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Status</TableHead>
@@ -84,6 +85,7 @@ export default function AppointmentsTable() {
                 <TableRow key={apt.id}>
                     <TableCell>{apt.clientName}</TableCell>
                     <TableCell className="font-medium">{apt.service}</TableCell>
+                    <TableCell>PKR {apt.price?.toLocaleString()}</TableCell>
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{apt.time}</TableCell>
                     <TableCell>

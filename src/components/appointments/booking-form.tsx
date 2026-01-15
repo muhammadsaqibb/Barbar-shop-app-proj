@@ -24,7 +24,14 @@ import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Appointment } from '@/types';
 
-const services = ['Classic Haircut', 'Beard Trim & Shape-Up', 'Hot Towel Shave', 'Haircut & Shave Combo', 'Kids Cut'];
+const services = [
+  { name: 'Classic Haircut', price: 2500 },
+  { name: 'Beard Trim & Shape-Up', price: 1500 },
+  { name: 'Hot Towel Shave', price: 2000 },
+  { name: 'Haircut & Shave Combo', price: 4000 },
+  { name: 'Kids Cut', price: 1800 },
+];
+
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
   const hour = Math.floor(i / 2) + 9; // Barbershops often open a bit later
   const minute = i % 2 === 0 ? '00' : '30';
@@ -57,12 +64,20 @@ export default function BookingForm() {
     try {
       const storedAppointments = localStorage.getItem('appointments');
       const appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
+      const selectedService = services.find(s => s.name === values.service);
+
+      if (!selectedService) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Invalid service selected.' });
+        setLoading(false);
+        return;
+      }
       
       const newAppointment: Appointment = {
         id: new Date().toISOString(),
         clientId: user.uid,
         clientName: user.name,
         service: values.service,
+        price: selectedService.price,
         date: format(values.date, 'PPP'),
         time: values.time,
         status: 'pending',
@@ -101,8 +116,11 @@ export default function BookingForm() {
                 </FormControl>
                 <SelectContent>
                   {services.map((service) => (
-                    <SelectItem key={service} value={service}>
-                      {service}
+                    <SelectItem key={service.name} value={service.name}>
+                      <div className="flex justify-between w-full">
+                        <span>{service.name}</span>
+                        <span className="text-muted-foreground">PKR {service.price.toLocaleString()}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

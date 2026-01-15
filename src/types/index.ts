@@ -10,6 +10,7 @@ export interface Appointment {
   clientId: string;
   clientName?: string;
   service: string;
+  price: number;
   date: string;
   time: string;
   status: 'pending' | 'confirmed' | 'cancelled';
