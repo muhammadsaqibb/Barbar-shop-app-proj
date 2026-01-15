@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
@@ -23,13 +23,14 @@ import { useAuth } from '../auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Appointment } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const services = [
-  { name: 'Classic Haircut', price: 2500 },
-  { name: 'Beard Trim & Shape-Up', price: 1500 },
-  { name: 'Hot Towel Shave', price: 2000 },
-  { name: 'Haircut & Shave Combo', price: 4000 },
-  { name: 'Kids Cut', price: 1800 },
+  { id: 'classic-haircut', name: 'Classic Haircut', price: 2500 },
+  { id: 'beard-trim', name: 'Beard Trim & Shape-Up', price: 1500 },
+  { id: 'hot-towel-shave', name: 'Hot Towel Shave', price: 2000 },
+  { id: 'haircut-shave-combo', name: 'Haircut & Shave Combo', price: 4000 },
+  { id: 'kids-cut', name: 'Kids Cut', price: 1800 },
 ];
 
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
@@ -41,7 +42,9 @@ const timeSlots = Array.from({ length: 18 }, (_, i) => {
 });
 
 const formSchema = z.object({
-  service: z.string({ required_error: 'Please select a service.' }),
+  services: z.array(z.string()).refine((value) => value.some((item) => item), {
+    message: 'You have to select at least one service.',
+  }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string({ required_error: 'Please select a time.' }),
 });
@@ -53,6 +56,9 @@ export default function BookingForm() {
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      services: [],
+    }
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -64,10 +70,13 @@ export default function BookingForm() {
     try {
       const storedAppointments = localStorage.getItem('appointments');
       const appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
-      const selectedService = services.find(s => s.name === values.service);
+      
+      const selectedServices = services.filter(s => values.services.includes(s.id));
+      const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
+      const serviceNames = selectedServices.map(s => s.name).join(', ');
 
-      if (!selectedService) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Invalid service selected.' });
+      if (selectedServices.length === 0) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Please select at least one service.' });
         setLoading(false);
         return;
       }
@@ -76,8 +85,8 @@ export default function BookingForm() {
         id: new Date().toISOString(),
         clientId: user.uid,
         clientName: user.name,
-        service: values.service,
-        price: selectedService.price,
+        service: serviceNames,
+        price: totalPrice,
         date: format(values.date, 'PPP'),
         time: values.time,
         status: 'pending',
@@ -89,7 +98,7 @@ export default function BookingForm() {
 
       toast({
         title: 'Appointment Booked!',
-        description: `Your ${values.service} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+        description: `Your appointment for ${serviceNames} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
       });
       form.reset();
     } catch (error) {
@@ -104,27 +113,55 @@ export default function BookingForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="service"
-          render={({ field }) => (
+          name="services"
+          render={() => (
             <FormItem>
-              <FormLabel>Service</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a service" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {services.map((service) => (
-                    <SelectItem key={service.name} value={service.name}>
-                      <div className="flex justify-between w-full">
-                        <span>{service.name}</span>
-                        <span className="text-muted-foreground">PKR {service.price.toLocaleString()}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="mb-4">
+                <FormLabel className="text-base">Services</FormLabel>
+                <FormDescription>
+                  Select one or more services.
+                </FormDescription>
+              </div>
+              <div className="space-y-3">
+                {services.map((item) => (
+                  <FormField
+                    key={item.id}
+                    control={form.control}
+                    name="services"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={item.id}
+                          className="flex flex-row items-center justify-between rounded-lg border p-4"
+                        >
+                          <div className='space-y-0.5'>
+                            <FormLabel className="text-sm font-medium">
+                              {item.name}
+                            </FormLabel>
+                            <FormDescription>
+                              PKR {item.price.toLocaleString()}
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...(field.value || []), item.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item.id
+                                      )
+                                    )
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )
+                    }}
+                  />
+                ))}
+              </div>
               <FormMessage />
             </FormItem>
           )}
