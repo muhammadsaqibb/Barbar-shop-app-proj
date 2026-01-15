@@ -4,7 +4,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, ShoppingCart, GalleryHorizontal, User, Settings, Info, Briefcase, Sparkles, LayoutDashboard, Package } from "lucide-react";
+import { Scissors, Settings, Sparkles, LayoutDashboard, Package } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -51,41 +51,11 @@ export default function Home() {
             title="Packages"
             description="View our special packages."
           />
-          <ActionCard
-            href="#"
-            icon={<GalleryHorizontal className="h-6 w-6" />}
-            title="Gallery"
-            description="See our latest styles."
-          />
-          <ActionCard
-            href="#"
-            icon={<Info className="h-6 w-6" />}
-            title="Services"
-            description="View our list of services."
-          />
-           <ActionCard
-            href="#"
-            icon={<ShoppingCart className="h-6 w-6" />}
-            title="Products"
-            description="Shop our grooming products."
-          />
-          <ActionCard
-            href="#"
-            icon={<User className="h-6 w-6" />}
-            title="Profile"
-            description="Update your profile."
-          />
            <ActionCard
             href="#"
             icon={<Sparkles className="h-6 w-6" />}
             title="Specials"
             description="Check out our offers."
-          />
-           <ActionCard
-            href="#"
-            icon={<Briefcase className="h-6 w-6" />}
-            title="Careers"
-            description="Join our talented team."
           />
           <ActionCard
             href="#"
