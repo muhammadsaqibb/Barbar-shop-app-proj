@@ -148,18 +148,24 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
               {itemsToDisplay.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {itemsToDisplay.map((item) => (
-                        <ServiceCard
-                            key={item.id}
-                            service={item}
-                            isSelected={field.value?.includes(item.id) || false}
-                            onSelect={(checked) => {
-                                const currentValue = field.value || [];
-                                const newValue = checked
-                                ? [...currentValue, item.id]
-                                : currentValue.filter((value) => value !== item.id);
-                                field.onChange(newValue);
-                            }}
-                        />
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="services"
+                        render={({ field }) => (
+                          <ServiceCard
+                              service={item}
+                              isSelected={field.value?.includes(item.id) || false}
+                              onSelect={(checked) => {
+                                  const currentValue = field.value || [];
+                                  const newValue = checked
+                                  ? [...currentValue, item.id]
+                                  : currentValue.filter((value) => value !== item.id);
+                                  field.onChange(newValue);
+                              }}
+                          />
+                        )}
+                      />
                     ))}
                 </div>
               ) : (
@@ -316,3 +322,5 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
         </Card>
     )
 }
+
+    
