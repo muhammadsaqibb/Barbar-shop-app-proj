@@ -153,12 +153,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const filteredPackages = showPackagesOnly ? [] : packages.filter(pkg =>
-    pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (pkg.description && pkg.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
-
-
   const renderServiceList = (items: (typeof services) | (typeof packages), formField: any) => {
     if (items.length === 0) return null;
     return (
@@ -201,46 +195,31 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           name="services"
           render={({ field }) => (
             <FormItem>
-              {!showPackagesOnly && (
-                <div className="mb-4">
-                  <FormLabel className="text-base">Services</FormLabel>
-                  <FormDescription>
-                    Select one or more services or packages.
-                  </FormDescription>
-                </div>
-              )}
+              <div className="mb-4">
+                <FormLabel className="text-base">Services</FormLabel>
+                <FormDescription>
+                  Select one or more services.
+                </FormDescription>
+              </div>
               <div className="relative mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search for a service or package..."
+                  placeholder="Search for a service..."
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
 
-              {filteredPackages.length > 0 && (
-                <div className="mb-8">
-                    <h3 className="text-xl font-headline mb-4 text-center uppercase tracking-wider">Packages</h3>
-                    {renderServiceList(filteredPackages, field)}
+              {filteredServices.length > 0 ? (
+                <div>
+                  {renderServiceList(filteredServices, field)}
                 </div>
+              ) : (
+                <p className="text-center text-muted-foreground mt-4">No services found.</p>
               )}
               
-              {!showPackagesOnly && filteredServices.length > 0 && (
-                <div>
-                     <h3 className="text-xl font-headline mb-4 text-center uppercase tracking-wider">Individual Services</h3>
-                    {renderServiceList(filteredServices, field)}
-                </div>
-              )}
-
-              {showPackagesOnly && filteredServices.length > 0 && (
-                 renderServiceList(filteredServices, field)
-              )}
-
-              {filteredServices.length === 0 && filteredPackages.length === 0 && (
-                <p className="text-center text-muted-foreground mt-4">No services or packages found.</p>
-              )}
               <FormMessage />
             </FormItem>
           )}
@@ -349,5 +328,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
         </Card>
     )
 }
+
+    
 
     
