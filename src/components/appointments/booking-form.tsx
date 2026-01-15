@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Search } from 'lucide-react';
+import { CalendarIcon, Scissors, Search, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAuth } from '../auth-provider';
 import { useToast } from '@/hooks/use-toast';
@@ -26,6 +26,13 @@ import type { Appointment } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
 import { Input } from '../ui/input';
+
+const packages = [
+    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
+    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
+    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
+    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
+];
 
 const services = [
     { id: 'classic-haircut', name: 'Classic Haircut', price: 800 },
@@ -40,10 +47,6 @@ const services = [
     { id: 'kids-haircut', name: 'Kids Haircut', price: 500 },
     { id: 'senior-citizen-cut', name: 'Senior Citizen Cut', price: 500 },
     { id: 'hot-towel-beard-shave', name: 'Hot Towel Beard Shave', price: 800 },
-    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
-    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
-    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
-    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
     { id: 'beard-styling-with-products', name: 'Beard Styling with Products', price: 300 },
     { id: 'steam-facial', name: 'Steam Facial', price: 1200 },
     { id: 'black-mask-facial', name: 'Black Mask Facial', price: 1500 },
@@ -59,6 +62,8 @@ const services = [
     { id: 'hair-color-touch-up', name: 'Hair Color Touch-Up', price: 1500 },
     { id: 'eyebrow-trimming', name: 'Eyebrow Trimming', price: 200 },
 ];
+
+const allServices = [...packages, ...services];
 
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
   const hour = Math.floor(i / 2) + 9; // Barbershops often open a bit later
@@ -99,7 +104,7 @@ export default function BookingForm() {
       const storedAppointments = localStorage.getItem('appointments');
       const appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
       
-      const selectedServices = services.filter(s => values.services.includes(s.id));
+      const selectedServices = allServices.filter(s => values.services.includes(s.id));
       const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
       const serviceNames = selectedServices.map(s => s.name).join(', ');
 
@@ -141,6 +146,46 @@ export default function BookingForm() {
     (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const filteredPackages = packages.filter(pkg =>
+    pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (pkg.description && pkg.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+
+  const renderServiceList = (items: typeof services, formField: any) => {
+    if (items.length === 0) return null;
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {items.map((item) => (
+            <FormField
+                key={item.id}
+                control={form.control}
+                name="services"
+                render={() => (
+                    <FormItem>
+                        <FormControl>
+                            <ServiceCard
+                                service={item}
+                                isSelected={formField.value?.includes(item.id) || false}
+                                onSelect={(checked) => {
+                                    return checked
+                                    ? formField.onChange([...(formField.value || []), item.id])
+                                    : formField.onChange(
+                                        formField.value?.filter(
+                                            (value) => value !== item.id
+                                        )
+                                        )
+                                }}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -152,10 +197,10 @@ export default function BookingForm() {
               <div className="mb-4">
                 <FormLabel className="text-base">Services</FormLabel>
                 <FormDescription>
-                  Select one or more services.
+                  Select one or more services or packages.
                 </FormDescription>
               </div>
-              <div className="relative mb-4">
+              <div className="relative mb-6">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
@@ -165,36 +210,23 @@ export default function BookingForm() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredServices.map((item) => (
-                    <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="services"
-                        render={() => (
-                            <FormItem>
-                                <FormControl>
-                                    <ServiceCard
-                                        service={item}
-                                        isSelected={field.value?.includes(item.id) || false}
-                                        onSelect={(checked) => {
-                                            return checked
-                                            ? field.onChange([...(field.value || []), item.id])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                    (value) => value !== item.id
-                                                )
-                                                )
-                                        }}
-                                    />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                ))}
-              </div>
-              {filteredServices.length === 0 && (
-                <p className="text-center text-muted-foreground mt-4">No services found.</p>
+
+              {filteredPackages.length > 0 && (
+                <div className="mb-8">
+                    <h3 className="text-xl font-headline mb-4 text-center uppercase tracking-wider">Packages</h3>
+                    {renderServiceList(filteredPackages, field)}
+                </div>
+              )}
+              
+              {filteredServices.length > 0 && (
+                <div>
+                     <h3 className="text-xl font-headline mb-4 text-center uppercase tracking-wider">Individual Services</h3>
+                    {renderServiceList(filteredServices, field)}
+                </div>
+              )}
+
+              {filteredServices.length === 0 && filteredPackages.length === 0 && (
+                <p className="text-center text-muted-foreground mt-4">No services or packages found.</p>
               )}
               <FormMessage />
             </FormItem>
@@ -273,6 +305,7 @@ interface ServiceCardProps {
 }
 
 function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
+    const isPackage = packages.some(p => p.id === service.id);
     return (
         <Card 
             className={cn(
@@ -284,7 +317,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
             <CardContent className="p-4 relative flex-1 flex flex-col">
                 <div className="flex flex-col items-center text-center gap-2 flex-1">
                     <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
-                        <Scissors className="h-6 w-6" />
+                        {isPackage ? <Star className="h-6 w-6" /> : <Scissors className="h-6 w-6" />}
                     </div>
                     <p className="font-semibold text-sm leading-tight">{service.name}</p>
                     {service.description && (
@@ -303,3 +336,5 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
         </Card>
     )
 }
+
+    
