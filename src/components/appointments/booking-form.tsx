@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,61 +16,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Search, Star } from 'lucide-react';
+import { CalendarIcon, Scissors, Star } from 'lucide-react';
 import { format } from 'date-fns';
-import { useAuth } from '../auth-provider';
+import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import type { Appointment } from '@/types';
+import type { Appointment, Service, Barber } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
-import { Input } from '../ui/input';
-
-const services = [
-    { id: 'classic-haircut', name: 'Classic Haircut', price: 800 },
-    { id: 'skin-fade', name: 'Skin Fade', price: 1000 },
-    { id: 'beard-trim', name: 'Beard Trim', price: 400 },
-    { id: 'beard-trim-shape', name: 'Beard Trim & Shape', price: 500 },
-    { id: 'razor-beard-shave', name: 'Razor Beard Shave', price: 600 },
-    { id: 'haircut-beard-trim', name: 'Haircut + Beard Trim', price: 1200 },
-    { id: 'haircut-hot-towel-shave', name: 'Haircut + Hot Towel Shave', price: 1500 },
-    { id: 'head-shave', name: 'Head Shave', price: 700 },
-    { id: 'buzz-cut', name: 'Buzz Cut', price: 600 },
-    { id: 'kids-haircut', name: 'Kids Haircut', price: 500 },
-    { id: 'senior-citizen-cut', name: 'Senior Citizen Cut', price: 500 },
-    { id: 'hot-towel-beard-shave', name: 'Hot Towel Beard Shave', price: 800 },
-    { id: 'beard-styling-with-products', name: 'Beard Styling with Products', price: 300 },
-    { id: 'steam-facial', name: 'Steam Facial', price: 1200 },
-    { id: 'black-mask-facial', name: 'Black Mask Facial', price: 1500 },
-    { id: 'hair-wash-blow-dry', name: 'Hair Wash & Blow Dry', price: 500 },
-    { id: 'scalp-massage', name: 'Scalp Massage', price: 800 },
-    { id: 'anti-dandruff-treatment', name: 'Anti-Dandruff Treatment', price: 1000 },
-    { id: 'hair-spa-treatment', name: 'Hair Spa Treatment', price: 1800 },
-    { id: 'hair-wash', name: 'Hair Wash', price: 300 },
-    { id: 'beard-oil-application', name: 'Beard Oil Application', price: 200 },
-    { id: 'face-massage', name: 'Face Massage', price: 700 },
-    { id: 'neck-shoulder-massage', name: 'Neck & Shoulder Massage', price: 900 },
-    { id: 'styling-gel-wax', name: 'Styling Gel / Wax', price: 150 },
-    { id: 'hair-color-touch-up', name: 'Hair Color Touch-Up', price: 1500 },
-    { id: 'eyebrow-trimming', name: 'Eyebrow Trimming', price: 200 },
-];
-
-const packages = [
-    { id: 'gentleman-package', name: 'Gentleman Package', description: 'Haircut + Beard Trim + Hot Towel', price: 2500 },
-    { id: 'royal-package', name: 'Royal Package', description: 'Haircut + Shave + Facial + Massage', price: 4000 },
-    { id: 'kids-care-package', name: 'Kids Care Package', description: 'Haircut + Styling', price: 700 },
-    { id: 'wedding-groom-package', name: 'Wedding Groom Package', description: 'Full Grooming + Styling', price: 7500 },
-];
-
-const allServices = [...packages, ...services];
-
-const timeSlots = Array.from({ length: 18 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 9; // Barbershops often open a bit later
-  const minute = i % 2 === 0 ? '00' : '30';
-  const period = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${displayHour}:${minute} ${period}`;
-});
+import { useCollection, useFirebase } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Textarea } from '../ui/textarea';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -79,67 +34,86 @@ const formSchema = z.object({
   }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string({ required_error: 'Please select a time.' }),
+  barberId: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const timeSlots = Array.from({ length: 18 }, (_, i) => {
+  const hour = Math.floor(i / 2) + 9;
+  const minute = i % 2 === 0 ? '00' : '30';
+  const period = hour < 12 ? 'AM' : 'PM';
+  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+  return `${displayHour}:${minute} ${period}`;
 });
 
 interface BookingFormProps {
   showPackagesOnly?: boolean;
 }
 
-
 export default function BookingForm({ showPackagesOnly = false }: BookingFormProps) {
   const { user } = useAuth();
+  const { firestore } = useFirebase();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const { data: servicesData, loading: servicesLoading, error: servicesError } = useCollection<Service>(firestore ? collection(firestore, 'services') : null);
+  const { data: barbersData, loading: barbersLoading, error: barbersError } = useCollection<Barber>(firestore ? collection(firestore, 'barbers') : null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       services: [],
+      notes: '',
+      barberId: '',
     }
   });
 
+  const allServices = servicesData || [];
+  const packages = allServices.filter(s => s.isPackage);
+  const services = allServices.filter(s => !s.isPackage);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !user.name) {
+    if (!user || !user.uid || !firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
       return;
     }
-    setLoading(true);
-    try {
-      const storedAppointments = localStorage.getItem('appointments');
-      const appointments: Appointment[] = storedAppointments ? JSON.parse(storedAppointments) : [];
-      
-      const selectedServices = allServices.filter(s => values.services.includes(s.id));
-      const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
-      const serviceNames = selectedServices.map(s => s.name).join(', ');
 
+    setLoading(true);
+
+    try {
+      const selectedServices = allServices.filter(s => values.services.includes(s.id));
       if (selectedServices.length === 0) {
         toast({ variant: 'destructive', title: 'Error', description: 'Please select at least one service.' });
         setLoading(false);
         return;
       }
       
-      const newAppointment: Appointment = {
-        id: new Date().toISOString(),
+      const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
+      const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
+
+      const appointmentsCollection = collection(firestore, 'appointments');
+
+      await addDoc(appointmentsCollection, {
         clientId: user.uid,
-        clientName: user.name,
-        service: serviceNames,
-        price: totalPrice,
+        clientName: user.name || user.email,
+        services: selectedServices,
+        totalPrice,
+        totalDuration,
         date: format(values.date, 'PPP'),
         time: values.time,
+        barberId: values.barberId || null,
+        notes: values.notes || '',
         status: 'pending',
-        createdAt: new Date().getTime(),
-      };
-
-      appointments.push(newAppointment);
-      localStorage.setItem('appointments', JSON.stringify(appointments));
+        createdAt: serverTimestamp(),
+      });
 
       toast({
         title: 'Appointment Booked!',
-        description: `Your appointment for ${serviceNames} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+        description: `Your appointment is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
       });
       form.reset();
     } catch (error) {
+      console.error("Booking error: ", error);
       toast({ variant: 'destructive', title: 'Booking Failed', description: 'Could not book appointment. Please try again.' });
     } finally {
       setLoading(false);
@@ -148,11 +122,14 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
   const itemsToDisplay = showPackagesOnly ? packages : services;
 
-  const filteredServices = itemsToDisplay.filter(service =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  if (servicesLoading) {
+    return <p>Loading services...</p>;
+  }
 
+  if (servicesError) {
+    return <p className="text-destructive">Error loading services: {servicesError.message}</p>;
+  }
+  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -162,25 +139,15 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           render={({ field }) => (
             <FormItem>
               <div className="mb-4">
-                <FormLabel className="text-base">Services</FormLabel>
+                <FormLabel className="text-base">{showPackagesOnly ? 'Our Packages' : 'Services'}</FormLabel>
                 <FormDescription>
-                  Select one or more services.
+                  Select one or more {showPackagesOnly ? 'packages' : 'services'}.
                 </FormDescription>
               </div>
-              <div className="relative mb-6">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search for a service..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              {filteredServices.length > 0 ? (
+              
+              {itemsToDisplay.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filteredServices.map((item) => (
+                    {itemsToDisplay.map((item) => (
                         <ServiceCard
                             key={item.id}
                             service={item}
@@ -196,7 +163,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                     ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground mt-4">No services found.</p>
+                <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
               )}
               
               <FormMessage />
@@ -261,6 +228,48 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             )}
           />
         </div>
+
+        <FormField
+          control={form.control}
+          name="barberId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Barber (Optional)</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a barber" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">Any Barber</SelectItem>
+                  {barbersLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
+                  {barbersData?.map((barber) => (
+                    <SelectItem key={barber.id} value={barber.id}>
+                      {barber.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes for the Barber (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Any specific requests or instructions?" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button type="submit" className="w-full" size="lg" disabled={loading}>
           {loading ? 'Booking...' : 'Book Appointment'}
         </Button>
@@ -270,13 +279,12 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 }
 
 interface ServiceCardProps {
-    service: { id: string, name: string, price: number, description?: string };
+    service: Service;
     isSelected: boolean;
     onSelect: (checked: boolean) => void;
 }
 
 function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
-    const isPackage = packages.some(p => p.id === service.id);
     return (
         <Card 
             className={cn(
@@ -288,7 +296,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
             <CardContent className="p-4 relative flex-1 flex flex-col">
                 <div className="flex flex-col items-center text-center gap-2 flex-1">
                     <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
-                        {isPackage ? <Star className="h-6 w-6" /> : <Scissors className="h-6 w-6" />}
+                        {service.isPackage ? <Star className="h-6 w-6" /> : <Scissors className="h-6 w-6" />}
                     </div>
                     <p className="font-semibold text-sm leading-tight">{service.name}</p>
                     {service.description && (
