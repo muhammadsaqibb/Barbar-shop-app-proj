@@ -75,12 +75,6 @@ export default function Header() {
               <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
             ) : user ? (
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="#">
-                        <Settings />
-                        <span className="sr-only">Settings</span>
-                    </Link>
-                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -109,6 +103,10 @@ export default function Header() {
                     <DropdownMenuItem>
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
                         <LifeBuoy className="mr-2 h-4 w-4" />
