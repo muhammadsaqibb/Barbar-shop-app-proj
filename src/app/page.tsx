@@ -56,49 +56,42 @@ export default function Home() {
             icon={<GalleryHorizontal className="h-6 w-6" />}
             title="Gallery"
             description="See our latest styles."
-            disabled
           />
           <ActionCard
             href="#"
             icon={<Info className="h-6 w-6" />}
             title="Services"
             description="View our list of services."
-            disabled
           />
            <ActionCard
             href="#"
             icon={<ShoppingCart className="h-6 w-6" />}
             title="Products"
             description="Shop our grooming products."
-            disabled
           />
           <ActionCard
             href="#"
             icon={<User className="h-6 w-6" />}
             title="Profile"
             description="Update your profile."
-            disabled
           />
            <ActionCard
             href="#"
             icon={<Sparkles className="h-6 w-6" />}
             title="Specials"
             description="Check out our offers."
-            disabled
           />
            <ActionCard
             href="#"
             icon={<Briefcase className="h-6 w-6" />}
             title="Careers"
             description="Join our talented team."
-            disabled
           />
           <ActionCard
             href="#"
             icon={<Settings className="h-6 w-6" />}
             title="Settings"
             description="Adjust your preferences."
-            disabled
           />
         </div>
       </div>
