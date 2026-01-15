@@ -5,8 +5,19 @@ import BookingForm from "@/components/appointments/booking-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProtectedRoute from "@/components/protected-route";
 
+const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
+    if (name) return name;
+    if (email) {
+      const emailName = email.split('@')[0];
+      return emailName.split(/[\._-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+    return 'Guest';
+}
+
 export default function BookAppointmentPage() {
   const { user } = useAuth();
+
+  const displayName = formatUserDisplayName(user?.name, user?.email);
 
   return (
     <ProtectedRoute>
@@ -20,7 +31,7 @@ export default function BookAppointmentPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-center text-muted-foreground mb-6">
-                    Welcome, {user?.name || user?.email}! Fill out the form below to schedule your next visit.
+                     Fill out the form below to schedule your next visit, {displayName}.
                     </p>
                     <BookingForm />
                 </CardContent>

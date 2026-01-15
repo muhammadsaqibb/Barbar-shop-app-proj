@@ -7,6 +7,15 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Scissors, Settings, Sparkles, LayoutDashboard, Package, CalendarDays } from "lucide-react";
 
+const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
+    if (name) return name;
+    if (email) {
+      const emailName = email.split('@')[0];
+      return emailName.split(/[\._-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+    return 'Guest';
+}
+
 export default function Home() {
   const { user, loading } = useAuth();
 
@@ -20,6 +29,8 @@ export default function Home() {
       </div>
     );
   }
+  
+  const displayName = formatUserDisplayName(user?.name, user?.email);
 
   return (
     <div className="w-full">
@@ -29,7 +40,7 @@ export default function Home() {
             The Gentleman's Cut
           </h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
-            {user ? `Welcome back, ${user.name}.` : 'Your next haircut is just a few clicks away.'} Ready for a fresh look?
+            {user ? `Welcome back, ${displayName}.` : 'Your next haircut is just a few clicks away.'} Ready for a fresh look?
           </p>
         </div>
 
