@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Scissors, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Service, Barber, AppUser } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
@@ -29,6 +29,7 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
+import { seedDatabase } from '@/lib/seed';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -58,6 +59,13 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    if (firestore) {
+      seedDatabase(firestore);
+    }
+  }, [firestore]);
+
 
   const servicesCollectionRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'services') : null),
@@ -166,11 +174,19 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
   const handleServiceSelect = (serviceId: string, isSelected: boolean) => {
     const currentSelected = form.getValues('services');
-    const newSelectedServices = isSelected
-      ? [...currentSelected, serviceId]
-      : currentSelected.filter(id => id !== serviceId);
+    let newSelectedServices;
+
+    if (showPackagesOnly) {
+      newSelectedServices = isSelected ? [serviceId] : [];
+    } else {
+      newSelectedServices = isSelected
+        ? [...currentSelected, serviceId]
+        : currentSelected.filter(id => id !== serviceId);
+    }
+    
     form.setValue('services', newSelectedServices, { shouldValidate: true });
   };
+  
 
   if (servicesLoading) {
     return <p>Loading services...</p>;
@@ -216,18 +232,18 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
          <FormField
           control={form.control}
           name="services"
-          render={({ field }) => (
+          render={() => (
             <FormItem>
               <div className="mb-4">
                 <FormLabel className="text-base">{showPackagesOnly ? 'Our Packages' : 'Services'}</FormLabel>
                 <FormDescription>
-                  Select one or more {showPackagesOnly ? 'packages' : 'services'}.
+                   {showPackagesOnly ? 'Select a package.' : 'Select one or more services.'}
                 </FormDescription>
               </div>
                 {itemsToDisplay.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {itemsToDisplay.map((item) => (
-                      <ServiceCard
+                       <ServiceCard
                         key={item.id}
                         service={item}
                         isSelected={selectedServices.includes(item.id)}
