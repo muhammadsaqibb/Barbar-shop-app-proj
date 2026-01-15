@@ -1,5 +1,5 @@
 
-import { Firestore, collection, writeBatch, getDocs } from 'firebase/firestore';
+import { Firestore, collection, writeBatch, getDocs, doc } from 'firebase/firestore';
 import services from './services.json';
 import barbers from './barbers.json';
 
@@ -10,7 +10,7 @@ export const seedDatabase = async (db: Firestore) => {
     if (servicesSnapshot.empty) {
       const batch = writeBatch(db);
       services.forEach((service) => {
-        const docRef = collection(db, 'services').doc(service.id);
+        const docRef = doc(db, 'services', service.id);
         batch.set(docRef, service);
       });
       await batch.commit();
@@ -24,7 +24,7 @@ export const seedDatabase = async (db: Firestore) => {
     if (barbersSnapshot.empty) {
       const batch = writeBatch(db);
       barbers.forEach((barber) => {
-        const docRef = collection(db, 'barbers').doc(barber.id);
+        const docRef = doc(db, 'barbers', barber.id);
         batch.set(docRef, barber);
       });
       await batch.commit();
