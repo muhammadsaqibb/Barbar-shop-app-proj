@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, Settings, Sparkles, LayoutDashboard, Package } from "lucide-react";
+import { Scissors, Settings, Sparkles, LayoutDashboard, Package, CalendarDays } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -45,16 +46,16 @@ export default function Home() {
             title="Book Cut"
             description="Schedule a new appointment."
           />
+           <ActionCard
+            href="/my-appointments"
+            icon={<CalendarDays className="h-6 w-6" />}
+            title="My Appointments"
+            description="View your bookings."
+          />
           <ActionCard
             href="/packages"
             icon={<Package className="h-6 w-6" />}
             title="Packages"
-            description="View our special packages."
-          />
-           <ActionCard
-            href="/my-appointments"
-            icon={<Sparkles className="h-6 w-6" />}
-            title="Specials"
             description="Check out our offers."
           />
           <ActionCard
@@ -62,6 +63,7 @@ export default function Home() {
             icon={<Settings className="h-6 w-6" />}
             title="Settings"
             description="Adjust your preferences."
+            disabled
           />
         </div>
       </div>

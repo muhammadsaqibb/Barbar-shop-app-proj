@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,7 +22,7 @@ import { CalendarIcon, Scissors, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import type { Service, Barber } from '@/types';
+import type { Service, Barber, AppUser } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
@@ -37,6 +38,7 @@ const formSchema = z.object({
   time: z.string({ required_error: 'Please select a time.' }),
   barberId: z.string().optional(),
   notes: z.string().optional(),
+  customerId: z.string().optional(),
 });
 
 const timeSlots = Array.from({ length: 18 }, (_, i) => {
@@ -65,17 +67,23 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     () => (firestore ? collection(firestore, 'barbers') : null),
     [firestore]
   );
+  const usersCollectionRef = useMemoFirebase(
+    () => (user?.role === 'admin' && firestore ? collection(firestore, 'users') : null),
+    [firestore, user]
+  );
 
   const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useCollection<Service>(servicesCollectionRef);
   const { data: barbersData, isLoading: barbersLoading, error: barbersError } = useCollection<Barber>(barbersCollectionRef);
-  
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useCollection<AppUser>(usersCollectionRef);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       services: [],
       notes: '',
       barberId: 'any',
-    }
+      customerId: user?.uid,
+    },
   });
 
   const allServices = servicesData || [];
@@ -83,10 +91,32 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const services = allServices.filter(s => !s.isPackage);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !user.uid || !firestore) {
-      toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
-      return;
+    if (!firestore) return;
+
+    let bookingUser: { uid: string, name: string | null, email: string | null };
+
+    if (user?.role === 'admin' && values.customerId) {
+        const selectedCustomer = usersData?.find(u => u.uid === values.customerId);
+        if (!selectedCustomer) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Selected customer not found.' });
+            return;
+        }
+        bookingUser = {
+            uid: selectedCustomer.uid,
+            name: selectedCustomer.name,
+            email: selectedCustomer.email
+        };
+    } else if (user) {
+        bookingUser = {
+            uid: user.uid,
+            name: user.name,
+            email: user.email
+        };
+    } else {
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
+        return;
     }
+
 
     setLoading(true);
 
@@ -102,8 +132,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
     try {
       await addDoc(collection(firestore, 'appointments'), {
-        clientId: user.uid,
-        clientName: user.name || user.email,
+        clientId: bookingUser.uid,
+        clientName: bookingUser.name || bookingUser.email,
         services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
         totalPrice,
         totalDuration,
@@ -117,7 +147,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
       toast({
         title: 'Appointment Booked!',
-        description: `Your appointment is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+        description: `Appointment for ${bookingUser.name || bookingUser.email} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
       });
       form.reset();
     } catch(e) {
@@ -135,9 +165,10 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const selectedServices = form.watch('services') || [];
 
   const handleServiceSelect = (serviceId: string, isSelected: boolean) => {
+    const currentSelected = form.getValues('services');
     const newSelectedServices = isSelected
-      ? [...selectedServices, serviceId]
-      : selectedServices.filter(id => id !== serviceId);
+      ? [...currentSelected, serviceId]
+      : currentSelected.filter(id => id !== serviceId);
     form.setValue('services', newSelectedServices, { shouldValidate: true });
   };
 
@@ -152,6 +183,36 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        {user?.role === 'admin' && (
+          <FormField
+            control={form.control}
+            name="customerId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Customer</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {usersLoading && <SelectItem value="loading" disabled>Loading customers...</SelectItem>}
+                    {usersData?.map((customer) => (
+                      <SelectItem key={customer.uid} value={customer.uid}>
+                        {customer.name} ({customer.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                    Select the customer you are booking for.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
          <FormField
           control={form.control}
           name="services"
