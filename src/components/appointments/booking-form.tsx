@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -158,23 +156,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   }
 
   const itemsToDisplay = showPackagesOnly ? packages : regularServices;
-  const selectedServices = form.watch('services') || [];
 
-  const handleServiceSelect = (serviceId: string, isSelected: boolean) => {
-    const currentSelected = form.getValues('services');
-    let newSelectedServices;
-
-    if (showPackagesOnly) {
-      newSelectedServices = isSelected ? [serviceId] : [];
-    } else {
-      newSelectedServices = isSelected
-        ? [...currentSelected, serviceId]
-        : currentSelected.filter(id => id !== serviceId);
-    }
-    
-    form.setValue('services', newSelectedServices, { shouldValidate: true });
-  };
-  
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -211,7 +193,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
          <FormField
           control={form.control}
           name="services"
-          render={() => (
+          render={({ field }) => (
             <FormItem>
               <div className="mb-4">
                 <FormLabel className="text-base">{showPackagesOnly ? 'Our Packages' : 'Services'}</FormLabel>
@@ -221,14 +203,27 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
               </div>
                 {itemsToDisplay.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {itemsToDisplay.map((item) => (
-                       <ServiceCard
-                        key={item.id}
-                        service={item}
-                        isSelected={selectedServices.includes(item.id)}
-                        onSelect={(checked) => handleServiceSelect(item.id, checked)}
-                      />
-                    ))}
+                    {itemsToDisplay.map((item) => {
+                      const isSelected = field.value?.includes(item.id);
+                      return (
+                        <ServiceCard
+                          key={item.id}
+                          service={item}
+                          isSelected={isSelected}
+                          onSelect={() => {
+                            let newValue;
+                            if (showPackagesOnly) {
+                              newValue = isSelected ? [] : [item.id];
+                            } else {
+                              newValue = isSelected
+                                ? field.value?.filter((id) => id !== item.id)
+                                : [...(field.value || []), item.id];
+                            }
+                            field.onChange(newValue);
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
@@ -348,7 +343,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 interface ServiceCardProps {
     service: Service;
     isSelected: boolean;
-    onSelect: (checked: boolean) => void;
+    onSelect: () => void;
 }
 
 function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
@@ -358,7 +353,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
                 "cursor-pointer transition-all duration-200 hover:animate-shake h-full flex flex-col",
                 isSelected ? "ring-2 ring-primary border-primary" : "hover:shadow-md"
             )}
-            onClick={() => onSelect(!isSelected)}
+            onClick={onSelect}
         >
             <CardContent className="p-4 relative flex-1 flex flex-col">
                 <div className="flex flex-col items-center text-center gap-2 flex-1">
