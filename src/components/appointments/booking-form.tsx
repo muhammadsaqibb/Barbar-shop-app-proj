@@ -370,8 +370,7 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
                 </div>
                 <Checkbox
                     checked={isSelected}
-                    onCheckedChange={onSelect}
-                    className="absolute top-2 right-2"
+                    className="absolute top-2 right-2 pointer-events-none"
                     aria-label={`Select ${service.name}`}
                 />
             </CardContent>
