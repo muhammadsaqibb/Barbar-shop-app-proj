@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Scissors, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { Service, Barber, AppUser } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
@@ -29,7 +30,8 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
-import { seedDatabase } from '@/lib/seed';
+import services from '@/lib/services.json';
+import barbers from '@/lib/barbers.json';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -60,22 +62,15 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
-  const servicesCollectionRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'services') : null),
-    [firestore]
-  );
-  const barbersCollectionRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'barbers') : null),
-    [firestore]
-  );
   const usersCollectionRef = useMemoFirebase(
     () => (user?.role === 'admin' && firestore ? collection(firestore, 'users') : null),
     [firestore, user]
   );
 
-  const { data: servicesData, isLoading: servicesLoading, error: servicesError } = useCollection<Service>(servicesCollectionRef);
-  const { data: barbersData, isLoading: barbersLoading, error: barbersError } = useCollection<Barber>(barbersCollectionRef);
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useCollection<AppUser>(usersCollectionRef);
+  const { data: usersData, isLoading: usersLoading } = useCollection<AppUser>(usersCollectionRef);
+
+  const servicesData: Service[] = services;
+  const barbersData: Barber[] = barbers;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -89,7 +84,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
   const allServices = servicesData || [];
   const packages = allServices.filter(s => s.isPackage);
-  const services = allServices.filter(s => !s.isPackage);
+  const regularServices = allServices.filter(s => !s.isPackage);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) return;
@@ -162,7 +157,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     setLoading(false);
   }
 
-  const itemsToDisplay = showPackagesOnly ? packages : services;
+  const itemsToDisplay = showPackagesOnly ? packages : regularServices;
   const selectedServices = form.watch('services') || [];
 
   const handleServiceSelect = (serviceId: string, isSelected: boolean) => {
@@ -179,15 +174,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     
     form.setValue('services', newSelectedServices, { shouldValidate: true });
   };
-  
-
-  if (servicesLoading) {
-    return <p>Loading services...</p>;
-  }
-
-  if (servicesError) {
-    return <p className="text-destructive">Error loading services: {servicesError.message}</p>;
-  }
   
   return (
     <Form {...form}>
@@ -325,7 +311,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="any">Any Barber</SelectItem>
-                  {barbersLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
                   {barbersData?.map((barber) => (
                     <SelectItem key={barber.id} value={barber.id}>
                       {barber.name}
