@@ -14,18 +14,17 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star } from 'lucide-react';
+import { CalendarIcon, Scissors, Star, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import type { Service, Barber, AppUser } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
-import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
 import services from '@/lib/services.json';
@@ -84,8 +83,11 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const packages = allServices.filter(s => s.isPackage);
   const regularServices = allServices.filter(s => !s.isPackage);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) return;
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
+      return;
+    }
 
     let bookingUser: { uid: string, name: string | null, email: string | null };
 
@@ -123,36 +125,41 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     
     const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
     const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
+    
+    const appointmentData = {
+      clientId: bookingUser.uid,
+      clientName: bookingUser.name || bookingUser.email,
+      services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
+      totalPrice,
+      totalDuration,
+      date: format(values.date, 'PPP'),
+      time: values.time,
+      barberId: values.barberId === 'any' ? null : values.barberId,
+      notes: values.notes || '',
+      status: 'pending',
+      createdAt: serverTimestamp(),
+    };
 
-    try {
-      await addDoc(collection(firestore, 'appointments'), {
-        clientId: bookingUser.uid,
-        clientName: bookingUser.name || bookingUser.email,
-        services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
-        totalPrice,
-        totalDuration,
-        date: format(values.date, 'PPP'),
-        time: values.time,
-        barberId: values.barberId === 'any' ? null : values.barberId,
-        notes: values.notes || '',
-        status: 'pending',
-        createdAt: serverTimestamp(),
-      });
-
-      toast({
-        title: 'Appointment Booked!',
-        description: `Appointment for ${bookingUser.name || bookingUser.email} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
-      });
-      form.reset();
-    } catch(e) {
-       toast({
-        variant: 'destructive',
-        title: 'Booking Failed',
-        description: 'An unexpected error occurred.',
-      });
-    }
-
-    setLoading(false);
+    const appointmentsCollection = collection(firestore, 'appointments');
+    addDocumentNonBlocking(appointmentsCollection, appointmentData)
+        .then(() => {
+            toast({
+                title: 'Appointment Booked!',
+                description: `Appointment for ${bookingUser.name || bookingUser.email} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+            });
+            form.reset();
+        })
+        .catch(() => {
+            // Error is emitted globally by addDocumentNonBlocking
+            toast({
+                variant: 'destructive',
+                title: 'Booking Failed',
+                description: 'Could not book the appointment. Please check your connection or permissions.',
+            });
+        })
+        .finally(() => {
+            setLoading(false);
+        });
   }
 
   const itemsToDisplay = showPackagesOnly ? packages : regularServices;
@@ -356,6 +363,11 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
             onClick={onSelect}
         >
             <CardContent className="p-4 relative flex-1 flex flex-col">
+                 {isSelected && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-0.5">
+                        <Check className="h-3 w-3" />
+                    </div>
+                )}
                 <div className="flex flex-col items-center text-center gap-2 flex-1">
                     <div className="p-3 rounded-full bg-primary/10 text-primary mb-2">
                         {service.isPackage ? <Star className="h-6 w-6" /> : <Scissors className="h-6 w-6" />}
@@ -368,11 +380,6 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
                 <div className="mt-auto pt-2 text-center">
                    <p className="text-sm text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
                 </div>
-                <Checkbox
-                    checked={isSelected}
-                    className="absolute top-2 right-2 pointer-events-none"
-                    aria-label={`Select ${service.name}`}
-                />
             </CardContent>
         </Card>
     )
