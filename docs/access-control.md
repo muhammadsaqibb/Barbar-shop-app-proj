@@ -1,6 +1,6 @@
 # Step-by-Step Guide to Access Control
 
-This document explains how role-based access control is implemented in your application. The system is designed to differentiate between two main roles: `client` and `admin`.
+This document explains how role-based access control is implemented in your application. The system is designed to differentiate between three main roles: `client`, `staff`, and `admin`.
 
 ---
 
@@ -19,7 +19,8 @@ In `docs/backend.json`, the `User` entity is defined with a `role` property. Thi
     "name": { ... },
     "role": {
       "type": "string",
-      "description": "The user's role within the application (e.g., 'client', 'admin')."
+      "description": "The user's role within the application (e.g., 'client', 'admin', 'staff').",
+      "enum": ["client", "admin", "staff"]
     }
   },
   ...
@@ -41,12 +42,10 @@ const newUser: Omit<AppUser, 'id'> = {
 await setDoc(userDocRef, newUser);
 ```
 
-**3. How to Make a User an Admin:**
-To grant a user admin privileges, you must manually change their `role` from `client` to `admin` in your Firebase Firestore database.
-- Go to the Firebase Console.
-- Navigate to Firestore Database.
-- In the `users` collection, find the document for the user you want to make an admin.
-- Edit the `role` field from `'client'` to `'admin'`.
+**3. How to Make a User an Admin or Staff:**
+You can grant a user elevated privileges in two ways:
+- **In the App (Recommended):** As an admin, navigate to the "Manage Users" page from the homepage. You can use the dropdown next to any user's name to change their role to `staff` or `admin`.
+- **Manually in Firestore:** Go to the Firebase Console, navigate to the `users` collection, find the user's document, and edit the `role` field to `'staff'` or `'admin'`.
 
 ---
 
@@ -78,7 +77,8 @@ With the user's role available, we can now easily show or hide parts of the user
 You will see this pattern used frequently:
 
 ```tsx
-{user?.role === 'admin' && (
+// Show to Admins AND Staff
+{(user?.role === 'admin' || user?.role === 'staff') && (
   <ActionCard
     href="/overview"
     icon={<LayoutDashboard />}
@@ -86,26 +86,32 @@ You will see this pattern used frequently:
     description="View key stats and charts."
   />
 )}
+
+// Show ONLY to Admins
+{user?.role === 'admin' && (
+  <ActionCard
+    href="/admin/users"
+    icon={<Users />}
+    title="Manage Users"
+    description="Change user roles."
+  />
+)}
 ```
-This is a standard React pattern for conditional rendering. The `ActionCard` component will only be rendered if `user.role` is equal to `'admin'`. This is how we hide admin-only links and buttons from regular clients.
+This is a standard React pattern for conditional rendering. This is how we hide admin-only links and buttons from regular clients and staff.
 
 ---
 
 ### Part 4: Protecting Pages (Route Guards)
 
-Hiding a link is not enough. A user could still try to access an admin page by typing the URL directly. We prevent this using a "route guard".
+Hiding a link is not enough. A user could still try to access a page by typing the URL directly. We prevent this using "route guards".
 
-**File:** `src/components/admin/admin-route.tsx`
+**Files:**
+- `src/components/admin/admin-route.tsx` (for admin-only pages)
+- `src/components/admin/staff-admin-route.tsx` (for pages accessible by staff and admins)
 
-This component wraps any page that should be admin-only. For example, in `src/app/admin/dashboard/page.tsx`:
+These components wrap any page that should be protected. For example, `src/app/admin/users/page.tsx` is wrapped in `AdminRoute` because only admins should manage users. Conversely, `src/app/admin/dashboard/page.tsx` is wrapped in `StaffAdminRoute` because both staff and admins need to see the appointments.
 
-```tsx
-<AdminRoute>
-  {/* Admin page content here */}
-</AdminRoute>
-```
-
-The `AdminRoute` component checks if the user is an admin. If they are not, it automatically redirects them to the homepage, effectively blocking access.
+If an unauthorized user tries to access a protected page, the route guard automatically redirects them to the homepage.
 
 ---
 
@@ -117,28 +123,23 @@ This is the most critical part of access control. Frontend controls can be bypas
 
 These rules are the ultimate source of truth for your data security. They run on Google's servers and cannot be tampered with by users.
 
-We have a helper function `isAdmin()` that checks the user's role directly from the database.
+We have helper functions like `isAdmin()` and `isStaff()` to check the user's role directly from the database.
 
 ```rules
-function isAdmin() {
-  return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+function isStaffOrAdmin() {
+  return isAdmin() || isStaff();
 }
-```
 
-This function is then used to grant special permissions. For example, only an admin can list all appointments:
-
-```rules
 match /appointments/{appointmentId} {
-  // An admin can read any appointment.
-  allow get: if isAdmin() || resource.data.clientId == request.auth.uid;
+  // An admin or staff member can read any appointment.
+  allow get: if isStaffOrAdmin() || resource.data.clientId == request.auth.uid;
   
-  // An admin can list ALL appointments. 
-  // Clients can only list their own appointments using a query.
-  allow list: if isSignedIn(); 
+  // Only admins or staff can update or delete an appointment.
+  allow update, delete: if isStaffOrAdmin();
 }
 ```
 
-This ensures that even if a client could somehow try to fetch all appointments, your Firestore Security Rules would block the request.
+This ensures that even if a client could somehow try to modify an appointment that isn't theirs, your Firestore Security Rules would block the request.
 
 ---
 

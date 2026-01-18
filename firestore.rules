@@ -14,9 +14,20 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function isAdmin() {
-      // Check if the user's document in the 'users' collection has the 'admin' role.
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+
+    function isStaff() {
+      return isSignedIn() && getUserRole() == 'staff';
+    }
+
+    function isStaffOrAdmin() {
+      return isAdmin() || isStaff();
     }
 
     // ------------------------------------------------------------------------
@@ -42,20 +53,18 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-        // READ: An admin can read any appointment. A client can only read their own.
-        allow get: if isSignedIn() && (isAdmin() || resource.data.clientId == request.auth.uid);
+        // READ: An admin or staff can read any appointment. A client can only read their own.
+        allow get: if isSignedIn() && (isStaffOrAdmin() || resource.data.clientId == request.auth.uid);
         
-        // LIST: An admin can list ALL appointments. A client can ONLY list their own via a query.
-        // This rule is insecure for clients on a root collection without a way to enforce a 'where' clause.
-        // For this prototype, we'll assume client queries are written correctly.
+        // LIST: Admins and staff can list all appointments. A client can only list their own via a query.
+        // The client-side query must enforce filtering by clientId.
         allow list: if isSignedIn();
         
-        // WRITE: An admin can create/update/delete any appointment.
-        // A client can create an appointment for themselves.
-        allow create: if isSignedIn() && (isAdmin() || request.resource.data.clientId == request.auth.uid);
+        // CREATE: A client can create an appointment for themselves. Admins/staff can create for anyone.
+        allow create: if isSignedIn() && (isStaffOrAdmin() || request.resource.data.clientId == request.auth.uid);
         
-        // ONLY admins can change or delete an appointment's status.
-        allow update, delete: if isAdmin();
+        // UPDATE/DELETE: Only admins or staff can modify or cancel any appointment.
+        allow update, delete: if isStaffOrAdmin();
     }
   }
 }

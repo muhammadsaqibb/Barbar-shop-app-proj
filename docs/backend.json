@@ -21,7 +21,8 @@
         },
         "role": {
           "type": "string",
-          "description": "The user's role within the application (e.g., 'client', 'admin')."
+          "description": "The user's role within the application (e.g., 'client', 'admin', 'staff').",
+          "enum": ["client", "admin", "staff"]
         }
       },
       "required": [

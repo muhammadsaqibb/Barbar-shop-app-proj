@@ -27,7 +27,7 @@ export default function Header() {
   const { firestore } = useFirebase();
 
   const pendingQuery = useMemoFirebase(() => {
-    if (!firestore || user?.role !== 'admin') return null;
+    if (!firestore || (user?.role !== 'admin' && user?.role !== 'staff')) return null;
     return query(collection(firestore, 'appointments'), where('status', '==', 'pending'));
   }, [firestore, user]);
 
@@ -41,7 +41,7 @@ export default function Header() {
 
   const NavLinks = () => (
     <>
-      {user?.role === 'admin' && (
+      {(user?.role === 'admin' || user?.role === 'staff') && (
         <Button variant="ghost" asChild>
           <Link href="/overview">Overview</Link>
         </Button>
@@ -55,7 +55,7 @@ export default function Header() {
       <Button variant="ghost" asChild>
         <Link href="/my-appointments">My Appointments</Link>
       </Button>
-      {user?.role === 'admin' && (
+      {(user?.role === 'admin' || user?.role === 'staff') && (
         <Button variant="ghost" asChild>
             <Link href="/admin/dashboard" className="relative">
               Admin
@@ -116,26 +116,26 @@ export default function Header() {
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    {(user.role === 'admin' || user.role === 'staff') && (
+                        <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard" className="relative">
+                            <LayoutDashboard className="mr-2 h-4 w-4" />
+                            <span>Admin Dashboard</span>
+                            {pendingCount > 0 && (
+                            <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                                {pendingCount}
+                            </span>
+                            )}
+                        </Link>
+                        </DropdownMenuItem>
+                    )}
                     {user.role === 'admin' && (
-                        <>
-                            <DropdownMenuItem asChild>
-                            <Link href="/admin/dashboard" className="relative">
-                                <LayoutDashboard className="mr-2 h-4 w-4" />
-                                <span>Admin Dashboard</span>
-                                {pendingCount > 0 && (
-                                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                                    {pendingCount}
-                                </span>
-                                )}
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/users">
+                                <Users className="mr-2 h-4 w-4" />
+                                <span>Manage Users</span>
                             </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/admin/users">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>Manage Users</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </>
+                        </DropdownMenuItem>
                     )}
                      <DropdownMenuItem asChild>
                         <Link href="/packages">

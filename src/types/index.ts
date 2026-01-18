@@ -3,7 +3,7 @@ export interface AppUser {
   uid: string;
   email: string | null;
   name: string | null;
-  role: 'client' | 'admin';
+  role: 'client' | 'admin' | 'staff';
 }
 
 export interface Service {

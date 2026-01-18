@@ -20,7 +20,7 @@ export default function UserRoleUpdater({ user }: UserRoleUpdaterProps) {
     const { firestore } = useFirebase();
     const { toast } = useToast();
 
-    const handleRoleChange = async (newRole: 'client' | 'admin') => {
+    const handleRoleChange = async (newRole: 'client' | 'admin' | 'staff') => {
         if (!adminUser || user.uid === adminUser.uid) {
             toast({
                 variant: 'destructive',
@@ -55,7 +55,7 @@ export default function UserRoleUpdater({ user }: UserRoleUpdaterProps) {
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             <Select 
                 defaultValue={user.role} 
-                onValueChange={(value: 'client' | 'admin') => handleRoleChange(value)}
+                onValueChange={(value: 'client' | 'admin' | 'staff') => handleRoleChange(value)}
                 disabled={loading || adminUser?.uid === user.uid}
             >
                 <SelectTrigger className="w-full">
@@ -63,6 +63,7 @@ export default function UserRoleUpdater({ user }: UserRoleUpdaterProps) {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="client">Client</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>
             </Select>

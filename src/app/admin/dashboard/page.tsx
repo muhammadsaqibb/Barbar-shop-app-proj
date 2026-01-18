@@ -1,10 +1,10 @@
-import AdminRoute from "@/components/admin/admin-route";
+import StaffAdminRoute from "@/components/admin/staff-admin-route";
 import AppointmentsTable from "@/components/admin/appointments-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminDashboardPage() {
     return (
-        <AdminRoute>
+        <StaffAdminRoute>
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <Card className="shadow-lg border-border/20">
                     <CardHeader>
@@ -16,6 +16,6 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
-        </AdminRoute>
+        </StaffAdminRoute>
     );
 }

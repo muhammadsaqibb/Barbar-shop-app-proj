@@ -1,11 +1,11 @@
-import ProtectedRoute from "@/components/protected-route";
+import StaffAdminRoute from "@/components/admin/staff-admin-route";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, CheckCircle } from "lucide-react";
 import AppointmentsChart from "@/components/overview/appointments-chart";
 
 export default function OverviewPage() {
     return (
-        <ProtectedRoute>
+        <StaffAdminRoute>
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <h1 className="text-3xl font-headline mb-6">Overview</h1>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -60,6 +60,6 @@ export default function OverviewPage() {
                     </CardContent>
                 </Card>
             </div>
-        </ProtectedRoute>
+        </StaffAdminRoute>
     );
 }
