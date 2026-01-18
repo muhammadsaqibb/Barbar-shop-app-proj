@@ -13,14 +13,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/components/auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useFirebase } from '@/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -62,52 +61,46 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm shadow-lg border-border/20">
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline">Login</CardTitle>
-        <CardDescription>Enter your email and password below to login.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="w-full">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
+            control={form.control}
+            name="email"
+            render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
                     <Input type="email" placeholder="name@example.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                </FormControl>
+                <FormMessage />
                 </FormItem>
-              )}
+            )}
             />
             <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
+            control={form.control}
+            name="password"
+            render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
+                </FormControl>
+                <FormMessage />
                 </FormItem>
-              )}
+            )}
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing In...' : 'Sign In'}
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...</> : 'Sign In'}
             </Button>
-          </form>
+        </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="underline text-primary">
+        Don&apos;t have an account?{' '}
+        <Link href="/register" className="underline text-primary">
             Sign up
-          </Link>
+        </Link>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
