@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, Settings, Sparkles, LayoutDashboard, Package, CalendarDays } from "lucide-react";
+import { Scissors, Settings, Sparkles, LayoutDashboard, Package, CalendarDays, Users } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -46,12 +46,20 @@ export default function Home() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
           {user?.role === 'admin' && (
-            <ActionCard
-              href="/overview"
-              icon={<LayoutDashboard className="h-6 w-6" />}
-              title="Overview"
-              description="View key stats and charts."
-            />
+            <>
+              <ActionCard
+                href="/overview"
+                icon={<LayoutDashboard className="h-6 w-6" />}
+                title="Overview"
+                description="View key stats and charts."
+              />
+              <ActionCard
+                href="/admin/users"
+                icon={<Users className="h-6 w-6" />}
+                title="Manage Users"
+                description="Change user roles."
+              />
+            </>
           )}
           <ActionCard
             href="/book"

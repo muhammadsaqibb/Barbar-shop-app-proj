@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package } from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package, Users } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
@@ -116,17 +117,25 @@ export default function Header() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {user.role === 'admin' && (
-                        <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard" className="relative">
-                            <LayoutDashboard className="mr-2 h-4 w-4" />
-                            <span>Admin Dashboard</span>
-                             {pendingCount > 0 && (
-                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                                {pendingCount}
-                              </span>
-                            )}
-                        </Link>
-                        </DropdownMenuItem>
+                        <>
+                            <DropdownMenuItem asChild>
+                            <Link href="/admin/dashboard" className="relative">
+                                <LayoutDashboard className="mr-2 h-4 w-4" />
+                                <span>Admin Dashboard</span>
+                                {pendingCount > 0 && (
+                                <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                                    {pendingCount}
+                                </span>
+                                )}
+                            </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link href="/admin/users">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    <span>Manage Users</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        </>
                     )}
                      <DropdownMenuItem asChild>
                         <Link href="/packages">
