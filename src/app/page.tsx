@@ -5,7 +5,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, Settings, Sparkles, LayoutDashboard, Package, CalendarDays, Users } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -44,7 +44,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {(user?.role === 'admin' || user?.role === 'staff') && (
             <ActionCard
               href="/overview"
@@ -54,20 +54,12 @@ export default function Home() {
             />
           )}
           {user?.role === 'admin' && (
-             <>
-                <ActionCard
-                href="/admin/users"
-                icon={<Users className="h-6 w-6" />}
-                title="Manage Users"
-                description="Change user roles."
-                />
-                <ActionCard
-                href="/admin/services"
-                icon={<Sparkles className="h-6 w-6" />}
-                title="Manage Services"
-                description="Edit prices and packages."
-                />
-            </>
+            <ActionCard
+            href="/admin/services"
+            icon={<Sparkles className="h-6 w-6" />}
+            title="Manage Services"
+            description="Edit prices and packages."
+            />
           )}
           <ActionCard
             href="/book"
@@ -86,13 +78,6 @@ export default function Home() {
             icon={<Package className="h-6 w-6" />}
             title="Specials"
             description="Check out our packages."
-          />
-          <ActionCard
-            href="#"
-            icon={<Settings className="h-6 w-6" />}
-            title="Settings"
-            description="Adjust your preferences."
-            disabled
           />
         </div>
       </div>

@@ -16,7 +16,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star, Check, Loader2 } from 'lucide-react';
+import { CalendarIcon, Scissors, Star, Check, Loader2, Search } from 'lucide-react';
 import { format, addMinutes, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
@@ -30,6 +30,7 @@ import { useAuth } from '../auth-provider';
 import { Skeleton } from '../ui/skeleton';
 import { SeedServices } from '../admin/seed-services';
 import useSound from '@/hooks/use-sound';
+import { Input } from '../ui/input';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -63,6 +64,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dailyBookings, setDailyBookings] = useState<Appointment[]>([]);
   const [areSlotsLoading, setAreSlotsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const usersCollectionRef = useMemoFirebase(
     () => (user?.role === 'admin' && firestore ? collection(firestore, 'users') : null),
@@ -120,6 +122,15 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const allServices = useMemo(() => servicesData?.filter(s => s.enabled) || [], [servicesData]);
   const packages = useMemo(() => allServices.filter(s => s.isPackage), [allServices]);
   const regularServices = useMemo(() => allServices.filter(s => !s.isPackage), [allServices]);
+
+  const itemsToDisplay = showPackagesOnly ? packages : regularServices;
+
+  const filteredItemsToDisplay = useMemo(() => {
+      if (!searchTerm) return itemsToDisplay;
+      return itemsToDisplay.filter(item => 
+          item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+  }, [itemsToDisplay, searchTerm]);
 
   const availableTimeSlots = useMemo(() => {
     if (!watchedDate) return [];
@@ -226,8 +237,6 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         });
   }
 
-  const itemsToDisplay = showPackagesOnly ? packages : regularServices;
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -272,34 +281,51 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                    {showPackagesOnly ? 'Select a package.' : 'Select one or more services.'}
                 </FormDescription>
               </div>
+
+               {itemsToDisplay.length > 0 && (
+                 <div className="relative mb-6">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder={`Search for ${showPackagesOnly ? 'packages' : 'services'}...`}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+               )}
+
                 {servicesLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                   </div>
                 ) : itemsToDisplay.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {itemsToDisplay.map((item) => {
-                      const isSelected = field.value?.includes(item.id);
-                      return (
-                        <ServiceCard
-                          key={item.id}
-                          service={item}
-                          isSelected={isSelected}
-                          onSelect={() => {
-                            let newValue;
-                            if (showPackagesOnly) {
-                              newValue = isSelected ? [] : [item.id];
-                            } else {
-                              newValue = isSelected
-                                ? field.value?.filter((id) => id !== item.id)
-                                : [...(field.value || []), item.id];
-                            }
-                            field.onChange(newValue);
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
+                    filteredItemsToDisplay.length > 0 ? (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {filteredItemsToDisplay.map((item) => {
+                                const isSelected = field.value?.includes(item.id);
+                                return (
+                                    <ServiceCard
+                                    key={item.id}
+                                    service={item}
+                                    isSelected={isSelected}
+                                    onSelect={() => {
+                                        let newValue;
+                                        if (showPackagesOnly) {
+                                        newValue = isSelected ? [] : [item.id];
+                                        } else {
+                                        newValue = isSelected
+                                            ? field.value?.filter((id) => id !== item.id)
+                                            : [...(field.value || []), item.id];
+                                        }
+                                        field.onChange(newValue);
+                                    }}
+                                    />
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground mt-4">No results found for "{searchTerm}".</p>
+                    )
                 ) : (
                   <div>
                     {user?.role === 'admin' ? (

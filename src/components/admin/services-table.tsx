@@ -8,8 +8,8 @@ import { useCollection, useFirebase, useMemoFirebase, updateDocumentNonBlocking 
 import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Button } from '../ui/button';
-import { Edit, PlusCircle, Trash } from 'lucide-react';
-import { useState } from 'react';
+import { Edit, PlusCircle, Trash, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { ServiceDialog } from './service-dialog';
 import {
   AlertDialog,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
 import { SeedServices } from './seed-services';
+import { Input } from '../ui/input';
 
 
 export default function ServicesTable() {
@@ -39,6 +40,14 @@ export default function ServicesTable() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredServices = useMemo(() => {
+    if (!services) return [];
+    return services.filter(service => 
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [services, searchTerm]);
 
   const handleEdit = (service: Service) => {
     setSelectedService(service);
@@ -94,7 +103,16 @@ export default function ServicesTable() {
 
   return (
     <>
-    <div className="flex justify-end mb-4">
+    <div className="flex justify-between items-center mb-4">
+        <div className="relative w-full max-w-sm">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+                placeholder="Search services..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+            />
+        </div>
         <Button onClick={handleAdd}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Add Service
@@ -113,51 +131,59 @@ export default function ServicesTable() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {services.map((service) => (
-                <TableRow key={service.id}>
-                    <TableCell className="font-medium">{service.name}</TableCell>
-                    <TableCell>PKR {service.price?.toLocaleString()}</TableCell>
-                    <TableCell>{service.duration} min</TableCell>
-                    <TableCell>
-                        <Badge variant={service.isPackage ? "default" : "secondary"}>
-                            {service.isPackage ? "Package" : "Service"}
-                        </Badge>
-                    </TableCell>
-                     <TableCell>
-                        <Switch
-                            checked={service.enabled}
-                            onCheckedChange={() => handleToggleEnabled(service)}
-                            aria-label="Toggle service enabled state"
-                        />
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                            <Button variant="ghost" size="icon" onClick={() => handleEdit(service)}>
-                                <Edit className="h-4 w-4" />
-                            </Button>
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                        <Trash className="h-4 w-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action cannot be undone. This will permanently delete the service.
-                                    </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(service.id)}>Continue</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                    </TableCell>
-                </TableRow>
-                ))}
+                {filteredServices.length > 0 ? (
+                    filteredServices.map((service) => (
+                    <TableRow key={service.id}>
+                        <TableCell className="font-medium">{service.name}</TableCell>
+                        <TableCell>PKR {service.price?.toLocaleString()}</TableCell>
+                        <TableCell>{service.duration} min</TableCell>
+                        <TableCell>
+                            <Badge variant={service.isPackage ? "default" : "secondary"}>
+                                {service.isPackage ? "Package" : "Service"}
+                            </Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Switch
+                                checked={service.enabled}
+                                onCheckedChange={() => handleToggleEnabled(service)}
+                                aria-label="Toggle service enabled state"
+                            />
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" size="icon" onClick={() => handleEdit(service)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                            <Trash className="h-4 w-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This action cannot be undone. This will permanently delete the service.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(service.id)}>Continue</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                ) : (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24">
+                            No services found for "{searchTerm}".
+                        </TableCell>
+                    </TableRow>
+                )}
             </TableBody>
         </Table>
     </div>
