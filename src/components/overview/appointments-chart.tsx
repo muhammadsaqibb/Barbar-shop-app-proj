@@ -3,42 +3,89 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart"
+import type { Appointment } from "@/types"
+import { useMemo } from "react"
+import { format, subMonths } from "date-fns"
 
-const chartData = [
-  { month: "January", confirmed: 186, pending: 80 },
-  { month: "February", confirmed: 305, pending: 200 },
-  { month: "March", confirmed: 237, pending: 120 },
-  { month: "April", confirmed: 73, pending: 190 },
-  { month: "May", confirmed: 209, pending: 130 },
-  { month: "June", confirmed: 214, pending: 140 },
-]
+interface AppointmentsChartProps {
+  appointments: Appointment[];
+}
 
 const chartConfig = {
+  completed: {
+    label: "Completed",
+    color: "hsl(var(--chart-1))",
+  },
   confirmed: {
     label: "Confirmed",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
   pending: {
     label: "Pending",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-3))",
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "hsl(var(--chart-4))",
   },
 } satisfies ChartConfig
 
-export default function AppointmentsChart() {
+export default function AppointmentsChart({ appointments }: AppointmentsChartProps) {
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const sixMonthsAgo = subMonths(now, 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const months = Array.from({ length: 6 }, (_, i) => {
+        const date = subMonths(now, 5 - i);
+        return {
+            month: format(date, 'MMMM'),
+            completed: 0,
+            confirmed: 0,
+            pending: 0,
+            cancelled: 0,
+        };
+    });
+
+    const monthIndexMap = new Map(months.map((m, i) => [m.month, i]));
+
+    appointments.forEach(apt => {
+        if (!apt.createdAt?.toDate) return;
+
+        try {
+            const aptDate = apt.createdAt.toDate();
+            if (aptDate >= sixMonthsAgo) {
+                const monthName = format(aptDate, 'MMMM');
+                const index = monthIndexMap.get(monthName);
+
+                if (index !== undefined) {
+                    if (apt.status === 'completed' || apt.status === 'confirmed' || apt.status === 'pending' || apt.status === 'cancelled') {
+                        months[index][apt.status]++;
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore errors from invalid dates
+        }
+    });
+
+    return months;
+  }, [appointments]);
+
+  if (!appointments || appointments.length === 0) {
+    return <div className="flex h-[350px] w-full items-center justify-center text-muted-foreground">Not enough data to display chart.</div>
+  }
+
   return (
-      <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <ChartContainer config={chartConfig} className="h-[350px] w-full">
         <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
@@ -50,8 +97,11 @@ export default function AppointmentsChart() {
             />
             <YAxis />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="confirmed" fill="var(--color-confirmed)" radius={4} />
-            <Bar dataKey="pending" fill="var(--color-pending)" radius={4} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="completed" stackId="a" fill="var(--color-completed)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="confirmed" stackId="a" fill="var(--color-confirmed)" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="pending" stackId="a" fill="var(--color-pending)" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="cancelled" stackId="a" fill="var(--color-cancelled)" radius={[0, 0, 0, 0]} />
         </BarChart>
       </ChartContainer>
   )
