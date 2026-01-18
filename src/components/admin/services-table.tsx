@@ -25,18 +25,29 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { seedDatabase } from '@/lib/seed';
 
-const SeedServices = () => {
+const SeedServices = ({ onSeed }: { onSeed: (() => void) | undefined }) => {
     const { firestore } = useFirebase();
-    const { refetch } = useCollection(collection(firestore, 'services'));
     const [seeding, setSeeding] = useState(false);
+    const { toast } = useToast();
 
     const handleSeed = async () => {
         setSeeding(true);
         try {
             await seedDatabase(firestore);
-            if (refetch) refetch();
+            toast({
+                title: "Database Seeded!",
+                description: "Default services and barbers have been added.",
+            });
+            if (onSeed) {
+              onSeed();
+            }
         } catch (error) {
             console.error("Failed to seed database:", error);
+            toast({
+                variant: "destructive",
+                title: "Seeding Failed",
+                description: "Could not seed the database.",
+            });
         } finally {
             setSeeding(false);
         }
@@ -65,7 +76,7 @@ export default function ServicesTable() {
     [firestore]
   );
 
-  const { data: services, isLoading: loading, error } = useCollection<Service>(servicesCollectionRef);
+  const { data: services, isLoading: loading, error, refetch } = useCollection<Service>(servicesCollectionRef);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -117,7 +128,7 @@ export default function ServicesTable() {
   }
 
   if (!services || services.length === 0) {
-    return <SeedServices />;
+    return <SeedServices onSeed={refetch} />;
   }
 
   return (
