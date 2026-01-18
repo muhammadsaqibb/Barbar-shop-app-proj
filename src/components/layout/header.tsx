@@ -40,9 +40,11 @@ export default function Header() {
 
   const NavLinks = () => (
     <>
-      <Button variant="ghost" asChild>
-        <Link href="/overview">Overview</Link>
-      </Button>
+      {user?.role === 'admin' && (
+        <Button variant="ghost" asChild>
+          <Link href="/overview">Overview</Link>
+        </Button>
+      )}
        <Button variant="ghost" asChild>
         <Link href="/packages">Packages</Link>
       </Button>

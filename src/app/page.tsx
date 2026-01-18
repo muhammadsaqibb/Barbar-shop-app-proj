@@ -45,12 +45,14 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
-          <ActionCard
-            href="/overview"
-            icon={<LayoutDashboard className="h-6 w-6" />}
-            title="Overview"
-            description="View key stats and charts."
-          />
+          {user?.role === 'admin' && (
+            <ActionCard
+              href="/overview"
+              icon={<LayoutDashboard className="h-6 w-6" />}
+              title="Overview"
+              description="View key stats and charts."
+            />
+          )}
           <ActionCard
             href="/book"
             icon={<Scissors className="h-6 w-6" />}
