@@ -1,0 +1,199 @@
+"use client";
+
+import type { Service } from '@/types';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '../ui/skeleton';
+import { useCollection, useFirebase, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
+import { Switch } from '../ui/switch';
+import { Button } from '../ui/button';
+import { Edit, PlusCircle, Trash } from 'lucide-react';
+import { useState } from 'react';
+import { ServiceDialog } from './service-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
+import { seedDatabase } from '@/lib/seed';
+
+const SeedServices = () => {
+    const { firestore } = useFirebase();
+    const { refetch } = useCollection(collection(firestore, 'services'));
+    const [seeding, setSeeding] = useState(false);
+
+    const handleSeed = async () => {
+        setSeeding(true);
+        try {
+            await seedDatabase(firestore);
+            if (refetch) refetch();
+        } catch (error) {
+            console.error("Failed to seed database:", error);
+        } finally {
+            setSeeding(false);
+        }
+    };
+
+    return (
+        <div className="text-center p-8 border-2 border-dashed rounded-lg">
+            <h3 className="text-xl font-semibold">No Services Found</h3>
+            <p className="text-muted-foreground mt-2 mb-4">
+                Your services list is empty. You can seed the database with default services to get started.
+            </p>
+            <Button onClick={handleSeed} disabled={seeding}>
+                {seeding ? 'Seeding...' : 'Seed Default Services'}
+            </Button>
+        </div>
+    );
+}
+
+
+export default function ServicesTable() {
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
+
+  const servicesCollectionRef = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'services'), orderBy('name', 'asc')) : null),
+    [firestore]
+  );
+
+  const { data: services, isLoading: loading, error } = useCollection<Service>(servicesCollectionRef);
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  const handleEdit = (service: Service) => {
+    setSelectedService(service);
+    setDialogOpen(true);
+  };
+
+  const handleAdd = () => {
+    setSelectedService(null);
+    setDialogOpen(true);
+  };
+
+  const handleDelete = async (serviceId: string) => {
+    const serviceRef = doc(firestore, 'services', serviceId);
+    try {
+        await deleteDoc(serviceRef);
+        toast({
+            title: "Service Deleted",
+            description: "The service has been successfully deleted.",
+        });
+    } catch(e) {
+        toast({
+            variant: 'destructive',
+            title: 'Delete Failed',
+            description: 'Could not delete the service.',
+        })
+    }
+  }
+
+  const handleToggleEnabled = (service: Service) => {
+    const serviceRef = doc(firestore, 'services', service.id);
+    updateDocumentNonBlocking(serviceRef, { enabled: !service.enabled });
+  };
+
+  if (loading) {
+    return (
+        <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+        </div>
+    )
+  }
+
+  if (error) {
+    return <p className="text-destructive text-center">{error.message}</p>;
+  }
+
+  if (!services || services.length === 0) {
+    return <SeedServices />;
+  }
+
+  return (
+    <>
+    <div className="flex justify-end mb-4">
+        <Button onClick={handleAdd}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Service
+        </Button>
+    </div>
+    <div className="rounded-md border border-border/20">
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Enabled</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {services.map((service) => (
+                <TableRow key={service.id}>
+                    <TableCell className="font-medium">{service.name}</TableCell>
+                    <TableCell>PKR {service.price?.toLocaleString()}</TableCell>
+                    <TableCell>{service.duration} min</TableCell>
+                    <TableCell>
+                        <Badge variant={service.isPackage ? "default" : "secondary"}>
+                            {service.isPackage ? "Package" : "Service"}
+                        </Badge>
+                    </TableCell>
+                     <TableCell>
+                        <Switch
+                            checked={service.enabled}
+                            onCheckedChange={() => handleToggleEnabled(service)}
+                            aria-label="Toggle service enabled state"
+                        />
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="icon" onClick={() => handleEdit(service)}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action cannot be undone. This will permanently delete the service.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(service.id)}>Continue</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    </div>
+    <ServiceDialog
+        isOpen={dialogOpen}
+        onOpenChange={setDialogOpen}
+        service={selectedService}
+    />
+    </>
+  );
+}

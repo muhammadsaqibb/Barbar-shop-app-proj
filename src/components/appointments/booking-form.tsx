@@ -27,8 +27,7 @@ import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } f
 import { collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
-import services from '@/lib/services.json';
-import barbers from '@/lib/barbers.json';
+import { Skeleton } from '../ui/skeleton';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -68,8 +67,11 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   );
   const { data: usersData, isLoading: usersLoading } = useCollection<AppUser>(usersCollectionRef);
 
-  const servicesData: Service[] = services;
-  const barbersData: Barber[] = barbers;
+  const servicesCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'services') : null, [firestore]);
+  const { data: servicesData, isLoading: servicesLoading } = useCollection<Service>(servicesCollectionRef);
+
+  const barbersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'barbers') : null, [firestore]);
+  const { data: barbersData, isLoading: barbersLoading } = useCollection<Barber>(barbersCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -112,9 +114,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     fetchBookings();
   }, [watchedDate, firestore, toast, form]);
 
-  const allServices = servicesData || [];
-  const packages = allServices.filter(s => s.isPackage);
-  const regularServices = allServices.filter(s => !s.isPackage);
+  const allServices = useMemo(() => servicesData?.filter(s => s.enabled) || [], [servicesData]);
+  const packages = useMemo(() => allServices.filter(s => s.isPackage), [allServices]);
+  const regularServices = useMemo(() => allServices.filter(s => !s.isPackage), [allServices]);
 
   const availableTimeSlots = useMemo(() => {
     if (!watchedDate) return [];
@@ -266,7 +268,11 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                    {showPackagesOnly ? 'Select a package.' : 'Select one or more services.'}
                 </FormDescription>
               </div>
-                {itemsToDisplay.length > 0 ? (
+                {servicesLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
+                  </div>
+                ) : itemsToDisplay.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {itemsToDisplay.map((item) => {
                       const isSelected = field.value?.includes(item.id);
@@ -384,6 +390,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="any">Any Barber</SelectItem>
+                   {barbersLoading && <SelectItem value="loading" disabled>Loading barbers...</SelectItem>}
                   {barbersData?.map((barber) => (
                     <SelectItem key={barber.id} value={barber.id}>
                       {barber.name}

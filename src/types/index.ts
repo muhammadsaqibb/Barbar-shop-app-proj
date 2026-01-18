@@ -13,6 +13,7 @@ export interface Service {
   price: number;
   duration: number; // in minutes
   description?: string;
+  enabled: boolean;
 }
 
 export interface Barber {

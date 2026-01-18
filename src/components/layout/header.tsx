@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package, Users } from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package, Users, Sparkles } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
@@ -130,12 +130,20 @@ export default function Header() {
                         </DropdownMenuItem>
                     )}
                     {user.role === 'admin' && (
-                        <DropdownMenuItem asChild>
-                            <Link href="/admin/users">
-                                <Users className="mr-2 h-4 w-4" />
-                                <span>Manage Users</span>
-                            </Link>
-                        </DropdownMenuItem>
+                        <>
+                            <DropdownMenuItem asChild>
+                                <Link href="/admin/users">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    <span>Manage Users</span>
+                                </Link>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem asChild>
+                                <Link href="/admin/services">
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                    <span>Manage Services</span>
+                                </Link>
+                            </DropdownMenuItem>
+                        </>
                     )}
                      <DropdownMenuItem asChild>
                         <Link href="/packages">

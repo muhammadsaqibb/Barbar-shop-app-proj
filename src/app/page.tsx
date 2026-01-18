@@ -54,12 +54,20 @@ export default function Home() {
             />
           )}
           {user?.role === 'admin' && (
-            <ActionCard
-              href="/admin/users"
-              icon={<Users className="h-6 w-6" />}
-              title="Manage Users"
-              description="Change user roles."
-            />
+             <>
+                <ActionCard
+                href="/admin/users"
+                icon={<Users className="h-6 w-6" />}
+                title="Manage Users"
+                description="Change user roles."
+                />
+                <ActionCard
+                href="/admin/services"
+                icon={<Sparkles className="h-6 w-6" />}
+                title="Manage Services"
+                description="Edit prices and packages."
+                />
+            </>
           )}
           <ActionCard
             href="/book"

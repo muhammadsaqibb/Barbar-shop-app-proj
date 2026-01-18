@@ -44,12 +44,12 @@ service cloud.firestore {
 
     match /services/{serviceId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if isAdmin();
     }
 
     match /barbers/{barberId} {
       allow get, list: if true;
-      allow create, update, delete: if false;
+      allow create, update, delete: if isAdmin();
     }
     
     match /appointments/{appointmentId} {
