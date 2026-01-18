@@ -23,48 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
-import { seedDatabase } from '@/lib/seed';
-
-const SeedServices = ({ onSeed }: { onSeed: (() => void) | undefined }) => {
-    const { firestore } = useFirebase();
-    const [seeding, setSeeding] = useState(false);
-    const { toast } = useToast();
-
-    const handleSeed = async () => {
-        setSeeding(true);
-        try {
-            await seedDatabase(firestore);
-            toast({
-                title: "Database Seeded!",
-                description: "Default services and barbers have been added.",
-            });
-            if (onSeed) {
-              onSeed();
-            }
-        } catch (error) {
-            console.error("Failed to seed database:", error);
-            toast({
-                variant: "destructive",
-                title: "Seeding Failed",
-                description: "Could not seed the database.",
-            });
-        } finally {
-            setSeeding(false);
-        }
-    };
-
-    return (
-        <div className="text-center p-8 border-2 border-dashed rounded-lg">
-            <h3 className="text-xl font-semibold">No Services Found</h3>
-            <p className="text-muted-foreground mt-2 mb-4">
-                Your services list is empty. You can seed the database with default services to get started.
-            </p>
-            <Button onClick={handleSeed} disabled={seeding}>
-                {seeding ? 'Seeding...' : 'Seed Default Services'}
-            </Button>
-        </div>
-    );
-}
+import { SeedServices } from './seed-services';
 
 
 export default function ServicesTable() {
@@ -92,6 +51,7 @@ export default function ServicesTable() {
   };
 
   const handleDelete = async (serviceId: string) => {
+    if (!firestore) return;
     const serviceRef = doc(firestore, 'services', serviceId);
     try {
         await deleteDoc(serviceRef);
@@ -109,6 +69,7 @@ export default function ServicesTable() {
   }
 
   const handleToggleEnabled = (service: Service) => {
+    if (!firestore) return;
     const serviceRef = doc(firestore, 'services', service.id);
     updateDocumentNonBlocking(serviceRef, { enabled: !service.enabled });
   };
@@ -128,7 +89,7 @@ export default function ServicesTable() {
   }
 
   if (!services || services.length === 0) {
-    return <SeedServices onSeed={refetch} />;
+    return <SeedServices onSeed={refetch} variant="card" />;
   }
 
   return (

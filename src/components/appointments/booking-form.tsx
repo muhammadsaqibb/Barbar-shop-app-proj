@@ -28,6 +28,7 @@ import { collection, serverTimestamp, query, where, getDocs } from 'firebase/fir
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
 import { Skeleton } from '../ui/skeleton';
+import { SeedServices } from '../admin/seed-services';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -68,7 +69,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { data: usersData, isLoading: usersLoading } = useCollection<AppUser>(usersCollectionRef);
 
   const servicesCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'services') : null, [firestore]);
-  const { data: servicesData, isLoading: servicesLoading } = useCollection<Service>(servicesCollectionRef);
+  const { data: servicesData, isLoading: servicesLoading, refetch: refetchServices } = useCollection<Service>(servicesCollectionRef);
 
   const barbersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'barbers') : null, [firestore]);
   const { data: barbersData, isLoading: barbersLoading } = useCollection<Barber>(barbersCollectionRef);
@@ -297,7 +298,13 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                     })}
                   </div>
                 ) : (
-                  <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
+                  <div>
+                    {user?.role === 'admin' ? (
+                        <SeedServices onSeed={refetchServices} />
+                    ) : (
+                        <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
+                    )}
+                  </div>
                 )}
               <FormMessage />
             </FormItem>
