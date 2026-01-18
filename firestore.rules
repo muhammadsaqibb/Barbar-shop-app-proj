@@ -50,9 +50,11 @@ service cloud.firestore {
         allow list: if isSignedIn();
         
         // WRITE: An admin can create/update/delete any appointment.
-        // A client can create an appointment for themselves, and update/delete their own.
+        // A client can create an appointment for themselves.
         allow create: if isSignedIn() && (isAdmin() || request.resource.data.clientId == request.auth.uid);
-        allow update, delete: if isSignedIn() && (isAdmin() || resource.data.clientId == request.auth.uid);
+        
+        // ONLY admins can change or delete an appointment's status.
+        allow update, delete: if isAdmin();
     }
   }
 }

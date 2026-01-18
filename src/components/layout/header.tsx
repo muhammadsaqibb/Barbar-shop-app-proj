@@ -17,10 +17,21 @@ import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Package 
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
+import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const { firestore } = useFirebase();
+
+  const pendingQuery = useMemoFirebase(() => {
+    if (!firestore || user?.role !== 'admin') return null;
+    return query(collection(firestore, 'appointments'), where('status', '==', 'pending'));
+  }, [firestore, user]);
+
+  const { data: pendingAppointments } = useCollection(pendingQuery);
+  const pendingCount = pendingAppointments?.length ?? 0;
 
   const handleSignOut = async () => {
     await signOut();
@@ -43,7 +54,14 @@ export default function Header() {
       </Button>
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
-            <Link href="/admin/dashboard">Admin</Link>
+            <Link href="/admin/dashboard" className="relative">
+              Admin
+              {pendingCount > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                  {pendingCount}
+                </span>
+              )}
+            </Link>
         </Button>
       )}
     </>
@@ -97,9 +115,14 @@ export default function Header() {
                     <DropdownMenuSeparator />
                     {user.role === 'admin' && (
                         <DropdownMenuItem asChild>
-                        <Link href="/admin/dashboard">
+                        <Link href="/admin/dashboard" className="relative">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
                             <span>Admin Dashboard</span>
+                             {pendingCount > 0 && (
+                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                                {pendingCount}
+                              </span>
+                            )}
                         </Link>
                         </DropdownMenuItem>
                     )}

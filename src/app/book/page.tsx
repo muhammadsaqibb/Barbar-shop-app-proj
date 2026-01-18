@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/components/auth-provider";
 import BookingForm from "@/components/appointments/booking-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ProtectedRoute from "@/components/protected-route";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
@@ -26,13 +26,13 @@ export default function BookAppointmentPage() {
                 <Card className="shadow-lg border-border/20">
                 <CardHeader>
                     <CardTitle className="text-3xl font-headline text-center uppercase">
-                    Book Your Cut
+                    Book Your Appointment
                     </CardTitle>
+                    <CardDescription className="text-center text-muted-foreground pt-2">
+                     Welcome, {displayName}! Fill out the form below to schedule your visit.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-center text-muted-foreground mb-6">
-                     Fill out the form below to schedule your next visit, {displayName}.
-                    </p>
                     <BookingForm />
                 </CardContent>
                 </Card>

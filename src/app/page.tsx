@@ -66,8 +66,8 @@ export default function Home() {
           <ActionCard
             href="/packages"
             icon={<Package className="h-6 w-6" />}
-            title="Packages"
-            description="Check out our offers."
+            title="Specials"
+            description="Check out our packages."
           />
           <ActionCard
             href="#"

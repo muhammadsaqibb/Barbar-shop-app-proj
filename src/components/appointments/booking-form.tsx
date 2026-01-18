@@ -16,15 +16,15 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star, Check } from 'lucide-react';
-import { format } from 'date-fns';
+import { CalendarIcon, Scissors, Star, Check, Loader2 } from 'lucide-react';
+import { format, addMinutes, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import type { Service, Barber, AppUser } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
+import type { Service, Barber, AppUser, Appointment } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
 import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
 import services from '@/lib/services.json';
@@ -41,7 +41,8 @@ const formSchema = z.object({
   customerId: z.string().optional(),
 });
 
-const timeSlots = Array.from({ length: 18 }, (_, i) => {
+// 9am to 6pm in 30 minute intervals
+const allTimeSlots = Array.from({ length: 18 }, (_, i) => {
   const hour = Math.floor(i / 2) + 9;
   const minute = i % 2 === 0 ? '00' : '30';
   const period = hour < 12 ? 'AM' : 'PM';
@@ -57,13 +58,14 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { user } = useAuth();
   const { firestore } = useFirebase();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dailyBookings, setDailyBookings] = useState<Appointment[]>([]);
+  const [areSlotsLoading, setAreSlotsLoading] = useState(false);
   
   const usersCollectionRef = useMemoFirebase(
     () => (user?.role === 'admin' && firestore ? collection(firestore, 'users') : null),
     [firestore, user]
   );
-
   const { data: usersData, isLoading: usersLoading } = useCollection<AppUser>(usersCollectionRef);
 
   const servicesData: Service[] = services;
@@ -79,9 +81,80 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     },
   });
 
+  const watchedDate = form.watch('date');
+  const watchedServices = form.watch('services');
+
+  useEffect(() => {
+    if (!watchedDate || !firestore) return;
+    const fetchBookings = async () => {
+      setAreSlotsLoading(true);
+      form.setValue('time', '');
+      try {
+        const q = query(
+            collection(firestore, 'appointments'), 
+            where('date', '==', format(watchedDate, 'PPP')),
+            where('status', 'in', ['confirmed', 'pending'])
+        );
+        const snapshot = await getDocs(q);
+        const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+        setDailyBookings(bookings);
+      } catch (error) {
+        console.error("Failed to fetch bookings for date:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Error fetching schedule',
+          description: 'Could not load existing appointments. Please try again.'
+        });
+      } finally {
+        setAreSlotsLoading(false);
+      }
+    }
+    fetchBookings();
+  }, [watchedDate, firestore, toast, form]);
+
   const allServices = servicesData || [];
   const packages = allServices.filter(s => s.isPackage);
   const regularServices = allServices.filter(s => !s.isPackage);
+
+  const availableTimeSlots = useMemo(() => {
+    if (!watchedDate) return [];
+
+    const selectedServices = allServices.filter(s => watchedServices.includes(s.id));
+    const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
+
+    if (!totalDuration) return allTimeSlots;
+
+    const bookedIntervals = dailyBookings.map(booking => {
+      try {
+        const startDate = parse(`${booking.date} ${booking.time}`, 'PPP h:mm a', new Date());
+        const endDate = addMinutes(startDate, booking.totalDuration);
+        return { start: startDate, end: endDate };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean) as { start: Date, end: Date }[];
+    
+    const dateStr = format(watchedDate, 'PPP');
+    const shopCloseTime = parse(`${dateStr} 6:00 PM`, 'PPP h:mm a', new Date());
+
+    return allTimeSlots.filter(slot => {
+        try {
+          const slotStartTime = parse(`${dateStr} ${slot}`, 'PPP h:mm a', new Date());
+          const slotEndTime = addMinutes(slotStartTime, totalDuration);
+
+          if (slotEndTime > shopCloseTime) return false;
+
+          for (const interval of bookedIntervals) {
+              if (slotStartTime < interval.end && slotEndTime > interval.start) {
+                  return false;
+              }
+          }
+          return true;
+        } catch {
+          return false;
+        }
+    });
+  }, [dailyBookings, watchedServices, watchedDate, allServices]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) {
@@ -97,32 +170,17 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             toast({ variant: 'destructive', title: 'Error', description: 'Selected customer not found.' });
             return;
         }
-        bookingUser = {
-            uid: selectedCustomer.uid,
-            name: selectedCustomer.name,
-            email: selectedCustomer.email
-        };
+        bookingUser = { uid: selectedCustomer.uid, name: selectedCustomer.name, email: selectedCustomer.email };
     } else if (user) {
-        bookingUser = {
-            uid: user.uid,
-            name: user.name,
-            email: user.email
-        };
+        bookingUser = { uid: user.uid, name: user.name, email: user.email };
     } else {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
         return;
     }
 
-
-    setLoading(true);
+    setIsSubmitting(true);
 
     const selectedServices = allServices.filter(s => values.services.includes(s.id));
-    if (selectedServices.length === 0) {
-      toast({ variant: 'destructive', title: 'Error', description: 'Please select at least one service.' });
-      setLoading(false);
-      return;
-    }
-    
     const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
     const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
     
@@ -144,21 +202,21 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     addDocumentNonBlocking(appointmentsCollection, appointmentData)
         .then(() => {
             toast({
-                title: 'Appointment Booked!',
-                description: `Appointment for ${bookingUser.name || bookingUser.email} is scheduled for ${format(values.date, 'PPP')} at ${values.time}.`,
+                title: 'Appointment Request Sent!',
+                description: `Your request for ${format(values.date, 'PPP')} at ${values.time} is pending approval.`,
             });
-            form.reset();
+            form.reset({ services: [], notes: '', barberId: 'any', customerId: user?.uid });
+            setDailyBookings(prev => [...prev, appointmentData as Appointment]);
         })
         .catch(() => {
-            // Error is emitted globally by addDocumentNonBlocking
             toast({
                 variant: 'destructive',
                 title: 'Booking Failed',
-                description: 'Could not book the appointment. Please check your connection or permissions.',
+                description: 'Could not save the appointment. Please try again.',
             });
         })
         .finally(() => {
-            setLoading(false);
+            setIsSubmitting(false);
         });
   }
 
@@ -279,18 +337,31 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Time</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={areSlotsLoading || !watchedDate || availableTimeSlots.length === 0}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a time" />
+                      {areSlotsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      <SelectValue placeholder={
+                        !watchedDate 
+                          ? "Select a date first" 
+                          : areSlotsLoading 
+                          ? "Loading slots..." 
+                          : "Select a time"
+                      } />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {timeSlots.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
+                    {availableTimeSlots.length > 0 ? (
+                      availableTimeSlots.map((time) => (
+                        <SelectItem key={time} value={time}>
+                          {time}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-slots" disabled>
+                        No available slots for this day.
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -339,8 +410,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           )}
         />
 
-        <Button type="submit" className="w-full" size="lg" disabled={loading}>
-          {loading ? 'Booking...' : 'Book Appointment'}
+        <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting Request...' : 'Book Appointment'}
         </Button>
       </form>
     </Form>
