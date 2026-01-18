@@ -109,7 +109,7 @@ Hiding a link is not enough. A user could still try to access a page by typing t
 - `src/components/admin/admin-route.tsx` (for admin-only pages)
 - `src/components/admin/staff-admin-route.tsx` (for pages accessible by staff and admins)
 
-These components wrap any page that should be protected. For example, `src/app/admin/users/page.tsx` is wrapped in `AdminRoute` because only admins should manage users. Conversely, `src/app/admin/dashboard/page.tsx` is wrapped in `StaffAdminRoute` because both staff and admins need to see the appointments.
+These components wrap any page that should be protected. For example, `src/app/admin/users/page.tsx` is wrapped in `AdminRoute` because only admins should manage users. Conversely, `src/app/overview/page.tsx` is wrapped in `StaffAdminRoute` because both staff and admins should see it.
 
 If an unauthorized user tries to access a protected page, the route guard automatically redirects them to the homepage.
 
