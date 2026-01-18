@@ -18,7 +18,7 @@ export default function RegisterPage() {
                 <RegisterForm />
             </div>
              <div className="relative hidden md:flex items-center justify-center bg-muted/30 p-8">
-                <BarberLogo className="w-48 h-48 text-foreground" />
+                <BarberLogo className="w-64 h-64" />
             </div>
         </Card>
     </div>
