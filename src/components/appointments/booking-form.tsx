@@ -29,6 +29,7 @@ import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
 import { Skeleton } from '../ui/skeleton';
 import { SeedServices } from '../admin/seed-services';
+import useSound from '@/hooks/use-sound';
 
 const formSchema = z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
@@ -58,6 +59,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { user } = useAuth();
   const { firestore } = useFirebase();
   const { toast } = useToast();
+  const playSound = useSound();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dailyBookings, setDailyBookings] = useState<Appointment[]>([]);
   const [areSlotsLoading, setAreSlotsLoading] = useState(false);
@@ -160,6 +162,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   }, [dailyBookings, watchedServices, watchedDate, allServices]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    playSound('click');
     if (!firestore) {
       toast({ variant: 'destructive', title: 'Error', description: 'Database not available.' });
       return;

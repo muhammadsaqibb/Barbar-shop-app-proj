@@ -29,6 +29,7 @@ import { useEffect, useState } from 'react';
 import type { Service } from '@/types';
 import { useFirebase } from '@/firebase';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
+import useSound from '@/hooks/use-sound';
 
 const serviceSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -48,6 +49,7 @@ interface ServiceDialogProps {
 export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogProps) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
+  const playSound = useSound();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof serviceSchema>>({
@@ -78,6 +80,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
   }, [service, form, isOpen]);
 
   const onSubmit = async (values: z.infer<typeof serviceSchema>) => {
+    playSound('click');
     setIsSubmitting(true);
     try {
       if (service) {

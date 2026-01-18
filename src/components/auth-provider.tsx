@@ -1,10 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { AppUser } from '@/types';
+import React, { createContext, useContext, useEffect, useState, type ReactNode, useRef } from 'react';
+import type { AppUser, Appointment } from '@/types';
 import { useFirebase } from '@/firebase';
 import { onAuthStateChanged, signOut as firebaseSignOut, type User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, query, collection, where, onSnapshot } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import useSound from '@/hooks/use-sound';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -19,7 +21,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const { toast } = useToast();
+  const playSound = useSound();
+  const appointmentsListener = useRef<() => void | null>(null);
+
+
   useEffect(() => {
+    // --- Notification listener for client appointment changes ---
+    if (appointmentsListener.current) {
+        appointmentsListener.current();
+        appointmentsListener.current = null;
+    }
+
+    if (user && user.role === 'client' && firestore) {
+        const q = query(collection(firestore, 'appointments'), where('clientId', '==', user.uid));
+        
+        let isInitialData = true;
+
+        appointmentsListener.current = onSnapshot(q, (snapshot) => {
+            if (isInitialData) {
+                isInitialData = false;
+                return;
+            }
+
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'modified') {
+                    const appointment = change.doc.data() as Appointment;
+                    let title = '';
+                    let description = '';
+
+                    if (appointment.status === 'confirmed') {
+                        title = 'Appointment Confirmed!';
+                        description = `Your booking for ${appointment.date} at ${appointment.time} is confirmed.`;
+                    } else if (appointment.status === 'cancelled') {
+                        title = 'Appointment Cancelled';
+                        description = `Your booking for ${appointment.date} at ${appointment.time} has been cancelled.`;
+                    }
+                    
+                    if (title) {
+                        toast({ title, description });
+                        playSound('notification');
+                    }
+                }
+            });
+        });
+    }
+    // --- End of notification listener ---
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         // User is signed in, get custom user data from Firestore
@@ -47,8 +95,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [auth, firestore]);
+    return () => {
+      unsubscribe();
+      if (appointmentsListener.current) {
+        appointmentsListener.current();
+      }
+    };
+  }, [auth, firestore, user, toast, playSound]);
 
   const signOut = async () => {
     try {

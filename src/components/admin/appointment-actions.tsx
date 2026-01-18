@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import useSound from "@/hooks/use-sound";
 
 
 interface AppointmentActionsProps {
@@ -30,8 +31,10 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
     const [loading, setLoading] = useState< 'confirm' | 'cancel' | 'complete' | null>(null);
     const { toast } = useToast();
     const { firestore } = useFirebase();
+    const playSound = useSound();
 
     const handleUpdateStatus = async (status: 'confirmed' | 'cancelled' | 'completed') => {
+        playSound('click');
         setLoading(status === 'confirmed' ? 'confirm' : status === 'completed' ? 'complete' : 'cancel');
         try {
             const appointmentRef = doc(firestore, 'appointments', appointmentId);
@@ -72,6 +75,7 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
                             size="sm" 
                             variant="destructive"
                             disabled={loading === 'cancel'}
+                             onClick={() => playSound('click')}
                         >
                             <X className="mr-2 h-4 w-4" />
                             Cancel
@@ -114,6 +118,7 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
                           size="sm" 
                           variant="destructive"
                           disabled={loading === 'cancel'}
+                           onClick={() => playSound('click')}
                       >
                           <X className="mr-2 h-4 w-4" />
                           Cancel

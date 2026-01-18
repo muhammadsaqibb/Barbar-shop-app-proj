@@ -19,11 +19,16 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+import { useEffect, useRef } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import useSound from '@/hooks/use-sound';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const { firestore } = useFirebase();
+  const { toast } = useToast();
+  const playSound = useSound();
 
   const pendingQuery = useMemoFirebase(() => {
     if (!firestore || (user?.role !== 'admin' && user?.role !== 'staff')) return null;
@@ -32,6 +37,26 @@ export default function Header() {
 
   const { data: pendingAppointments } = useCollection(pendingQuery);
   const pendingCount = pendingAppointments?.length ?? 0;
+  const prevPendingCount = useRef(pendingCount);
+  const isInitialLoad = useRef(true);
+
+  useEffect(() => {
+    if (isInitialLoad.current) {
+        isInitialLoad.current = false;
+        prevPendingCount.current = pendingCount;
+        return;
+    }
+
+    if (pendingCount > prevPendingCount.current) {
+        toast({
+            title: "New Booking Request",
+            description: "A new appointment is awaiting approval.",
+        });
+        playSound('notification');
+    }
+
+    prevPendingCount.current = pendingCount;
+  }, [pendingCount, toast, playSound]);
 
   const handleSignOut = async () => {
     await signOut();
