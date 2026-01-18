@@ -58,13 +58,18 @@ export default function Header() {
       {(user?.role === 'admin' || user?.role === 'staff') && (
         <Button variant="ghost" asChild>
             <Link href="/admin/dashboard" className="relative">
-              Admin
+              Bookings
               {pendingCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                   {pendingCount}
                 </span>
               )}
             </Link>
+        </Button>
+      )}
+      {user?.role === 'admin' && (
+        <Button variant="ghost" asChild>
+          <Link href="/admin/users">Manage Users</Link>
         </Button>
       )}
     </>
@@ -120,7 +125,7 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                         <Link href="/admin/dashboard" className="relative">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
-                            <span>Admin Dashboard</span>
+                            <span>Bookings Dashboard</span>
                             {pendingCount > 0 && (
                             <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
                                 {pendingCount}
