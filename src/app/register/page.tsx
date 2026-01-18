@@ -1,11 +1,8 @@
 import RegisterForm from '@/components/auth/register-form';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import BarberLogo from '@/components/barber-logo';
 
 export default function RegisterPage() {
-  const loginImage = PlaceHolderImages.find(p => p.id === 'login-splash');
-
   return (
     <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-4xl overflow-hidden shadow-2xl border-border/20 grid grid-cols-1 md:grid-cols-2">
@@ -20,16 +17,8 @@ export default function RegisterPage() {
                 </div>
                 <RegisterForm />
             </div>
-             <div className="relative hidden md:block">
-                {loginImage && (
-                    <Image
-                        src={loginImage.imageUrl}
-                        alt={loginImage.description}
-                        data-ai-hint={loginImage.imageHint}
-                        fill
-                        className="object-cover"
-                    />
-                )}
+             <div className="relative hidden md:flex items-center justify-center bg-muted/30 p-8">
+                <BarberLogo className="w-48 h-48 text-foreground" />
             </div>
         </Card>
     </div>
