@@ -6,7 +6,7 @@ import { Skeleton } from '../ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { Button } from '../ui/button';
-import { Edit, PlusCircle, Trash, Search } from 'lucide-react';
+import { Edit, PlusCircle, Trash, Search, DollarSign } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { ExpenseDialog } from './expense-dialog';
 import {
@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
 import { format } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 
 export default function ExpensesTable() {
@@ -46,6 +47,11 @@ export default function ExpensesTable() {
         expense.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [expenses, searchTerm]);
+
+  const totalExpenses = useMemo(() => {
+    if (!filteredExpenses) return 0;
+    return filteredExpenses.reduce((total, expense) => total + expense.amount, 0);
+  }, [filteredExpenses]);
 
   const handleEdit = (expense: Expense) => {
     setSelectedExpense(expense);
@@ -77,10 +83,13 @@ export default function ExpensesTable() {
 
   if (loading) {
     return (
-        <div className="space-y-2">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
+        <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
         </div>
     )
   }
@@ -91,6 +100,19 @@ export default function ExpensesTable() {
 
   return (
     <>
+    <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">PKR {totalExpenses.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+                {searchTerm ? 'Total of filtered expenses' : 'Total of all expenses'}
+            </p>
+        </CardContent>
+    </Card>
+
     <div className="flex justify-between items-center mb-4">
         <div className="relative w-full max-w-sm">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
