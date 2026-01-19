@@ -71,12 +71,14 @@ export default function Home() {
               title="Book Cut"
               description="Schedule a new appointment."
             />
+            {user?.role === 'client' && (
              <ActionCard
               href="/my-appointments"
               icon={<CalendarDays className="h-6 w-6" />}
               title="My Appointments"
               description="View your bookings."
             />
+            )}
             <ActionCard
               href="/packages"
               icon={<Package className="h-6 w-6" />}
