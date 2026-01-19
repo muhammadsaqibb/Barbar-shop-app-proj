@@ -257,6 +257,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       status: appointmentStatus,
       paymentStatus: 'unpaid',
       createdAt: serverTimestamp(),
+      bookedBy: isAdminOrStaff ? (user?.name || user?.email) : undefined,
     };
 
     const appointmentsCollection = collection(firestore, 'appointments');

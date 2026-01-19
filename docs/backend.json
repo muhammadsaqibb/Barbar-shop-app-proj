@@ -130,6 +130,13 @@
           "type": "string",
           "description": "The date and time when the appointment was created.",
           "format": "date-time"
+        },
+        "bookedBy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The name of the admin or staff member who manually created the booking."
         }
       },
       "required": [

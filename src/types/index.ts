@@ -35,6 +35,7 @@ export interface Appointment {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
   paymentStatus: 'paid' | 'unpaid';
   createdAt: any;
+  bookedBy?: string;
 }
 
 export interface Expense {
