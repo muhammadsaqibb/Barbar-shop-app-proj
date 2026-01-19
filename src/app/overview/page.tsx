@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import StaffAdminRoute from "@/components/admin/staff-admin-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, CheckCircle, XCircle, DollarSign, BadgeCheck, UserX } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, Wallet, BadgeCheck, UserX } from "lucide-react";
 import AppointmentsChart from "@/components/overview/appointments-chart";
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -105,7 +105,7 @@ export default function OverviewPage() {
                     <StatCard 
                         title="Total Revenue" 
                         value={`PKR ${stats.totalRevenue.toLocaleString()}`} 
-                        icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+                        icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
                         description="From completed appointments"
                     />
                     <StatCard 
