@@ -36,3 +36,11 @@ export interface Appointment {
   paymentStatus: 'paid' | 'unpaid';
   createdAt: any;
 }
+
+export interface Expense {
+  id: string;
+  name: string;
+  amount: number;
+  createdAt: any;
+  notes?: string;
+}

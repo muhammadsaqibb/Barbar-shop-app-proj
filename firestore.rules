@@ -66,5 +66,9 @@ service cloud.firestore {
         // UPDATE/DELETE: Only admins or staff can modify or cancel any appointment.
         allow update, delete: if isStaffOrAdmin();
     }
+
+    match /expenses/{expenseId} {
+      allow read, list, create, update, delete: if isAdmin();
+    }
   }
 }

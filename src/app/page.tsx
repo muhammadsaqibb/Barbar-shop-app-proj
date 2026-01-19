@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Users } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -52,10 +52,16 @@ export default function Home() {
             {user?.role === 'admin' && (
                <>
                   <ActionCard
-                  href="/admin/services"
-                  icon={<Sparkles className="h-6 w-6" />}
-                  title="Manage Services"
-                  description="Edit prices and packages."
+                    href="/admin/services"
+                    icon={<Sparkles className="h-6 w-6" />}
+                    title="Manage Services"
+                    description="Edit prices and packages."
+                  />
+                  <ActionCard
+                    href="/admin/expenses"
+                    icon={<Receipt className="h-6 w-6" />}
+                    title="Manage Expenses"
+                    description="Add or track expenses."
                   />
                </>
             )}

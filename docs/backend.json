@@ -209,6 +209,41 @@
         "id",
         "name"
       ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents a single business expense.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or description of the expense (e.g., 'Shop Rent', 'Staff Lunch')."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The cost of the expense."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date the expense was incurred.",
+          "format": "date-time"
+        },
+        "notes": {
+            "type": "string",
+            "description": "Optional notes about the expense."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "amount",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -283,6 +318,22 @@
             {
               "name": "barberId",
               "description": "The unique ID of the barber."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores all business expenses. Only accessible by admins.",
+          "params": [
+            {
+              "name": "expenseId",
+              "description": "The unique ID of the expense."
             }
           ]
         }

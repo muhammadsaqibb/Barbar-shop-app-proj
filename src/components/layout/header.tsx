@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Users, Sparkles } from 'lucide-react';
+import { LifeBuoy, LogOut, Settings, User as UserIcon, LayoutDashboard, Users, Sparkles, Receipt } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu } from 'lucide-react';
@@ -161,6 +161,12 @@ export default function Header() {
                                 <Link href="/admin/services">
                                     <Sparkles className="mr-2 h-4 w-4" />
                                     <span>Manage Services</span>
+                                </Link>
+                            </DropdownMenuItem>
+                             <DropdownMenuItem asChild>
+                                <Link href="/admin/expenses">
+                                    <Receipt className="mr-2 h-4 w-4" />
+                                    <span>Manage Expenses</span>
                                 </Link>
                             </DropdownMenuItem>
                         </>
