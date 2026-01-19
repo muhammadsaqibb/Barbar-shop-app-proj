@@ -1,25 +1,19 @@
 import RegisterForm from '@/components/auth/register-form';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import BarberLogo from '@/components/barber-logo';
+import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export default function RegisterPage() {
   return (
     <div className="container flex min-h-[calc(100vh-4rem)] items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-4xl overflow-hidden shadow-2xl border-border/20 grid grid-cols-1 md:grid-cols-2">
-            <div className="p-6 sm:p-10 flex flex-col justify-center">
-                <div className="mb-8 text-center">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-3xl font-headline text-center">Create an Account</CardTitle>
-                        <CardDescription className="text-center pt-2">
-                            Join us! It's quick and easy.
-                        </CardDescription>
-                    </CardHeader>
-                </div>
+        <Card className="w-full max-w-md shadow-2xl border-border/20">
+            <CardHeader className="text-center">
+                <CardTitle className="text-3xl font-headline">Create an Account</CardTitle>
+                <CardDescription className="pt-2">
+                    Join us! It's quick and easy.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
                 <RegisterForm />
-            </div>
-             <div className="relative hidden md:flex items-center justify-center bg-muted/30 p-8">
-                <BarberLogo className="w-64 h-64" />
-            </div>
+            </CardContent>
         </Card>
     </div>
   );
