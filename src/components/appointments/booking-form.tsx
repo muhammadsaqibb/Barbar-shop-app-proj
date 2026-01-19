@@ -110,6 +110,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       barberId: 'any',
       customerType: 'registered',
       customerId: isAdminOrStaff ? undefined : user?.uid,
+      walkInName: '',
     },
   });
 
