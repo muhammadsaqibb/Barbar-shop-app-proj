@@ -3,8 +3,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Users } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -16,18 +15,7 @@ const formatUserDisplayName = (name: string | null | undefined, email: string | 
 }
 
 export default function Home() {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <Skeleton className="h-12 w-1/2" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      </div>
-    );
-  }
+  const { user } = useAuth();
   
   const displayName = formatUserDisplayName(user?.name, user?.email);
 
@@ -61,12 +49,14 @@ export default function Home() {
             </>
           )}
           {user?.role === 'admin' && (
-            <ActionCard
-            href="/admin/services"
-            icon={<Sparkles className="h-6 w-6" />}
-            title="Manage Services"
-            description="Edit prices and packages."
-            />
+             <>
+                <ActionCard
+                href="/admin/services"
+                icon={<Sparkles className="h-6 w-6" />}
+                title="Manage Services"
+                description="Edit prices and packages."
+                />
+             </>
           )}
           <ActionCard
             href="/book"

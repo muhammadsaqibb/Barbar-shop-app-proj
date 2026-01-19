@@ -7,6 +7,7 @@ import { onAuthStateChanged, signOut as firebaseSignOut, type User as FirebaseUs
 import { doc, getDoc, query, collection, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import useSound from '@/hooks/use-sound';
+import SplashScreen from './layout/splash-screen';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -101,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         appointmentsListener.current();
       }
     };
-  }, [auth, firestore, user, toast, playSound]);
+  }, [auth, firestore, user?.uid, toast, playSound]);
 
   const signOut = async () => {
     try {
@@ -111,6 +112,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error signing out: ", error);
     }
   };
+
+  if (loading) {
+    return <SplashScreen />;
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
