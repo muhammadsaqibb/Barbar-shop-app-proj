@@ -27,6 +27,7 @@ export default function AppointmentsList() {
       case 'confirmed':
         return 'default';
       case 'cancelled':
+      case 'no-show':
         return 'destructive';
       case 'completed':
         return 'outline'
@@ -60,6 +61,7 @@ export default function AppointmentsList() {
                 <TableRow>
                 <TableHead>Service(s)</TableHead>
                 <TableHead>Price</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead className="text-right">Status</TableHead>
@@ -70,6 +72,11 @@ export default function AppointmentsList() {
                 <TableRow key={apt.id}>
                     <TableCell className="font-medium">{apt.services.map(s => s.name).join(', ')}</TableCell>
                     <TableCell>PKR {apt.totalPrice?.toLocaleString()}</TableCell>
+                    <TableCell>
+                        <Badge variant={apt.paymentStatus === 'paid' ? 'default' : 'secondary'} className="capitalize">
+                            {apt.paymentStatus}
+                        </Badge>
+                    </TableCell>
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{apt.time}</TableCell>
                     <TableCell className="text-right">

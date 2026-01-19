@@ -9,6 +9,7 @@ import AppointmentActions from './appointment-actions';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { format, addMinutes, parse } from 'date-fns';
+import PaymentStatusUpdater from './payment-status-updater';
 
 const formatTimeRange = (startTimeStr: string, dateStr: string, duration: number): string => {
     if (!startTimeStr || !dateStr || !duration) return startTimeStr;
@@ -62,6 +63,7 @@ export default function AppointmentsTable() {
       case 'confirmed':
         return 'default';
       case 'cancelled':
+      case 'no-show':
         return 'destructive';
       case 'completed':
           return 'outline';
@@ -99,6 +101,7 @@ export default function AppointmentsTable() {
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Duration</TableHead>
+                <TableHead>Payment</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -112,6 +115,9 @@ export default function AppointmentsTable() {
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{formatTimeRange(apt.time, apt.date, apt.totalDuration)}</TableCell>
                     <TableCell>{apt.totalDuration} min</TableCell>
+                    <TableCell className="w-[120px]">
+                        <PaymentStatusUpdater appointment={apt} />
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(apt.status)} className="capitalize">
                           {apt.status}

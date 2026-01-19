@@ -32,6 +32,7 @@ export interface Appointment {
   time: string;
   barberId: string | null;
   notes: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  paymentStatus: 'paid' | 'unpaid';
   createdAt: any;
 }

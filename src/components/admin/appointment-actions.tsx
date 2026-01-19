@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { Appointment } from "@/types";
-import { Check, X } from "lucide-react";
+import { Check, X, UserX } from "lucide-react";
 import { useState } from "react";
 import { useFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { doc } from "firebase/firestore";
@@ -28,21 +28,21 @@ interface AppointmentActionsProps {
 }
 
 export default function AppointmentActions({ appointmentId, currentStatus, onStatusChange }: AppointmentActionsProps) {
-    const [loading, setLoading] = useState< 'confirm' | 'cancel' | 'complete' | null>(null);
+    const [loading, setLoading] = useState< 'confirm' | 'cancel' | 'complete' | 'no-show' | null>(null);
     const { toast } = useToast();
     const { firestore } = useFirebase();
     const playSound = useSound();
 
-    const handleUpdateStatus = async (status: 'confirmed' | 'cancelled' | 'completed') => {
+    const handleUpdateStatus = async (status: 'confirmed' | 'cancelled' | 'completed' | 'no-show') => {
         playSound('click');
-        setLoading(status === 'confirmed' ? 'confirm' : status === 'completed' ? 'complete' : 'cancel');
+        setLoading(status);
         try {
             const appointmentRef = doc(firestore, 'appointments', appointmentId);
             updateDocumentNonBlocking(appointmentRef, { status });
 
             toast({
                 title: "Status Updated",
-                description: `Appointment has been ${status}.`,
+                description: `Appointment has been ${status === 'no-show' ? 'marked as no-show' : status}.`,
             });
             onStatusChange();
         } catch (error) {
@@ -112,6 +112,30 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
                     <Check className="mr-2 h-4 w-4" />
                     {loading === 'complete' ? 'Completing...' : 'Mark as Completed'}
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="text-destructive border-destructive" onClick={() => playSound('click')}>
+                            <UserX className="mr-2 h-4 w-4" />
+                            No Show
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will mark the client as a "no-show". This action can be reversed later if needed.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                                className="bg-destructive hover:bg-destructive/90"
+                                onClick={() => handleUpdateStatus('no-show')}>
+                                    {loading === 'no-show' ? 'Marking...' : 'Yes, mark as no-show'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
                  <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button 

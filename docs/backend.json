@@ -44,24 +44,87 @@
         },
         "clientId": {
           "type": "string",
-          "description": "Reference to User. (Relationship: User 1:N Appointment)"
+          "description": "The ID of the client who booked the appointment."
         },
-        "service": {
-          "type": "string",
-          "description": "The service being booked for the appointment."
+        "clientName": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The name of the client."
+        },
+        "services": {
+          "type": "array",
+          "description": "An array of services booked for the appointment.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "price": {
+                "type": "number"
+              },
+              "duration": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "price",
+              "duration"
+            ]
+          }
+        },
+        "totalPrice": {
+          "type": "number",
+          "description": "The total price of all services in the appointment."
+        },
+        "totalDuration": {
+          "type": "number",
+          "description": "The total duration of all services in the appointment in minutes."
         },
         "date": {
           "type": "string",
-          "description": "The date of the appointment.",
-          "format": "date-time"
+          "description": "The date of the appointment in 'MMM d, yyyy' format."
         },
         "time": {
           "type": "string",
           "description": "The time of the appointment."
         },
+        "barberId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The ID of the requested barber."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes from the client for the barber."
+        },
         "status": {
           "type": "string",
-          "description": "The status of the appointment (e.g., 'pending', 'confirmed', 'cancelled')."
+          "description": "The status of the appointment.",
+          "enum": [
+            "pending",
+            "confirmed",
+            "completed",
+            "cancelled",
+            "no-show"
+          ]
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "The payment status of the appointment.",
+          "enum": [
+            "paid",
+            "unpaid"
+          ]
         },
         "createdAt": {
           "type": "string",
@@ -72,14 +135,18 @@
       "required": [
         "id",
         "clientId",
-        "service",
+        "clientName",
+        "services",
+        "totalPrice",
+        "totalDuration",
         "date",
         "time",
         "status",
+        "paymentStatus",
         "createdAt"
       ]
     },
-     "Service": {
+    "Service": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Service",
       "type": "object",
@@ -114,24 +181,34 @@
           "description": "Whether the service is available for booking."
         }
       },
-      "required": ["id", "name", "isPackage", "price", "duration", "enabled"]
+      "required": [
+        "id",
+        "name",
+        "isPackage",
+        "price",
+        "duration",
+        "enabled"
+      ]
     },
     "Barber": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Barber",
-        "type": "object",
-        "description": "Represents a barber available for appointments.",
-        "properties": {
-            "id": {
-                "type": "string",
-                "description": "Unique identifier for the barber."
-            },
-            "name": {
-                "type": "string",
-                "description": "The name of the barber."
-            }
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Barber",
+      "type": "object",
+      "description": "Represents a barber available for appointments.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the barber."
         },
-        "required": ["id", "name"]
+        "name": {
+          "type": "string",
+          "description": "The name of the barber."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
     }
   },
   "auth": {
@@ -178,11 +255,13 @@
           ]
         }
       },
-       {
+      {
         "path": "/services/{serviceId}",
         "definition": {
           "entityName": "Service",
-          "schema": { "$ref": "#/backend/entities/Service" },
+          "schema": {
+            "$ref": "#/backend/entities/Service"
+          },
           "description": "Stores all services and packages offered by the shop.",
           "params": [
             {
@@ -196,7 +275,9 @@
         "path": "/barbers/{barberId}",
         "definition": {
           "entityName": "Barber",
-          "schema": { "$ref": "#/backend/entities/Barber" },
+          "schema": {
+            "$ref": "#/backend/entities/Barber"
+          },
           "description": "Stores information about available barbers.",
           "params": [
             {

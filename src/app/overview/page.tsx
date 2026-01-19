@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import StaffAdminRoute from "@/components/admin/staff-admin-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, CheckCircle, XCircle, DollarSign, BadgeCheck } from "lucide-react";
+import { Calendar, Clock, CheckCircle, XCircle, DollarSign, BadgeCheck, UserX } from "lucide-react";
 import AppointmentsChart from "@/components/overview/appointments-chart";
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -42,6 +42,7 @@ export default function OverviewPage() {
             confirmedCount: 0,
             completedCount: 0,
             cancelledCount: 0,
+            noShowCount: 0,
           };
         }
     
@@ -56,6 +57,7 @@ export default function OverviewPage() {
           confirmedCount: appointments.filter(apt => apt.status === 'confirmed').length,
           completedCount: appointments.filter(apt => apt.status === 'completed').length,
           cancelledCount: appointments.filter(apt => apt.status === 'cancelled').length,
+          noShowCount: appointments.filter(apt => apt.status === 'no-show').length,
         };
       }, [appointments]);
 
@@ -64,8 +66,8 @@ export default function OverviewPage() {
             <StaffAdminRoute>
                 <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                     <h1 className="text-3xl font-headline mb-6">Business Overview</h1>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
-                        {[...Array(6)].map((_, i) => (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                        {[...Array(7)].map((_, i) => (
                             <Card key={i}>
                                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                     <Skeleton className="h-4 w-24" />
@@ -99,7 +101,7 @@ export default function OverviewPage() {
         <StaffAdminRoute>
             <div className="container mx-auto p-4 sm:p-6 lg:p-8">
                 <h1 className="text-3xl font-headline mb-6">Business Overview</h1>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 mb-8">
                     <StatCard 
                         title="Total Revenue" 
                         value={`PKR ${stats.totalRevenue.toLocaleString()}`} 
@@ -135,6 +137,12 @@ export default function OverviewPage() {
                         value={stats.cancelledCount}
                         icon={<XCircle className="h-4 w-4 text-muted-foreground" />}
                         description="Cancelled by staff"
+                    />
+                     <StatCard 
+                        title="No Shows" 
+                        value={stats.noShowCount}
+                        icon={<UserX className="h-4 w-4 text-muted-foreground" />}
+                        description="Clients who did not appear"
                     />
                 </div>
 

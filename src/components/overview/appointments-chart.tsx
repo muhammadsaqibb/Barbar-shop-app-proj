@@ -35,6 +35,10 @@ const chartConfig = {
     label: "Cancelled",
     color: "hsl(var(--chart-4))",
   },
+  "no-show": {
+    label: "No Show",
+    color: "hsl(var(--chart-5))",
+  },
 } satisfies ChartConfig
 
 export default function AppointmentsChart({ appointments }: AppointmentsChartProps) {
@@ -52,6 +56,7 @@ export default function AppointmentsChart({ appointments }: AppointmentsChartPro
             confirmed: 0,
             pending: 0,
             cancelled: 0,
+            "no-show": 0,
         };
     });
 
@@ -67,7 +72,7 @@ export default function AppointmentsChart({ appointments }: AppointmentsChartPro
                 const index = monthIndexMap.get(monthName);
 
                 if (index !== undefined) {
-                    if (apt.status === 'completed' || apt.status === 'confirmed' || apt.status === 'pending' || apt.status === 'cancelled') {
+                    if (apt.status === 'completed' || apt.status === 'confirmed' || apt.status === 'pending' || apt.status === 'cancelled' || apt.status === 'no-show') {
                         months[index][apt.status]++;
                     }
                 }
@@ -102,6 +107,7 @@ export default function AppointmentsChart({ appointments }: AppointmentsChartPro
             <Bar dataKey="confirmed" stackId="a" fill="var(--color-confirmed)" radius={[0, 0, 0, 0]} />
             <Bar dataKey="pending" stackId="a" fill="var(--color-pending)" radius={[0, 0, 0, 0]} />
             <Bar dataKey="cancelled" stackId="a" fill="var(--color-cancelled)" radius={[0, 0, 0, 0]} />
+            <Bar dataKey="no-show" stackId="a" fill="var(--color-no-show)" radius={[0, 0, 0, 0]} />
         </BarChart>
       </ChartContainer>
   )

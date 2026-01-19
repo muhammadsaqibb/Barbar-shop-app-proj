@@ -212,6 +212,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       barberId: values.barberId === 'any' ? null : values.barberId,
       notes: values.notes || '',
       status: 'pending',
+      paymentStatus: 'unpaid',
       createdAt: serverTimestamp(),
     };
 
