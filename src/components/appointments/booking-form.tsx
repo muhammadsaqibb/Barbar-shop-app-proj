@@ -31,8 +31,9 @@ import { Skeleton } from '../ui/skeleton';
 import { SeedServices } from '../admin/seed-services';
 import useSound from '@/hooks/use-sound';
 import { Input } from '../ui/input';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
-const formSchema = z.object({
+const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
   services: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: 'You have to select at least one service.',
   }),
@@ -40,7 +41,26 @@ const formSchema = z.object({
   time: z.string({ required_error: 'Please select a time.' }),
   barberId: z.string().optional(),
   notes: z.string().optional(),
+  customerType: z.enum(['registered', 'walk-in']).default('registered'),
   customerId: z.string().optional(),
+  walkInName: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (isAdminOrStaff) {
+        if (data.customerType === 'registered' && !data.customerId) {
+            ctx.addIssue({
+                path: ['customerId'],
+                message: 'Please select a registered customer.',
+            });
+        }
+        if (data.customerType === 'walk-in') {
+            if (!data.walkInName || data.walkInName.length < 2) {
+                 ctx.addIssue({
+                    path: ['walkInName'],
+                    message: 'Name must be at least 2 characters.',
+                });
+            }
+        }
+    }
 });
 
 // 9am to 6pm in 30 minute intervals
@@ -65,10 +85,12 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const [dailyBookings, setDailyBookings] = useState<Appointment[]>([]);
   const [areSlotsLoading, setAreSlotsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
   
   const usersCollectionRef = useMemoFirebase(
-    () => (user?.role === 'admin' && firestore ? collection(firestore, 'users') : null),
-    [firestore, user]
+    () => (isAdminOrStaff && firestore ? collection(firestore, 'users') : null),
+    [firestore, isAdminOrStaff]
   );
   const { data: usersData, isLoading: usersLoading } = useCollection<AppUser>(usersCollectionRef);
 
@@ -78,18 +100,22 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const barbersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'barbers') : null, [firestore]);
   const { data: barbersData, isLoading: barbersLoading } = useCollection<Barber>(barbersCollectionRef);
 
+  const formSchema = bookingFormSchema(isAdminOrStaff);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       services: [],
       notes: '',
       barberId: 'any',
-      customerId: user?.uid,
+      customerType: 'registered',
+      customerId: isAdminOrStaff ? undefined : user?.uid,
     },
   });
 
   const watchedDate = form.watch('date');
   const watchedServices = form.watch('services');
+  const watchedCustomerType = form.watch('customerType');
 
   useEffect(() => {
     if (!watchedDate || !firestore) return;
@@ -179,31 +205,48 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       return;
     }
 
-    let bookingUser: { uid: string, name: string | null, email: string | null };
+    setIsSubmitting(true);
 
-    if (user?.role === 'admin' && values.customerId) {
-        const selectedCustomer = usersData?.find(u => u.uid === values.customerId);
-        if (!selectedCustomer) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Selected customer not found.' });
-            return;
+    let bookingClientId: string;
+    let bookingClientName: string | null;
+    let appointmentStatus: Appointment['status'] = 'pending';
+    let toastTitle = 'Appointment Request Sent!';
+    let toastDescription = `Your request for ${format(values.date, 'PPP')} at ${values.time} is pending approval.`;
+
+    if (isAdminOrStaff) {
+        appointmentStatus = 'confirmed';
+        toastTitle = 'Appointment Created!';
+        toastDescription = `An appointment for ${format(values.date, 'PPP')} at ${values.time} has been successfully booked.`;
+        if (values.customerType === 'walk-in') {
+            bookingClientId = 'walk-in';
+            bookingClientName = values.walkInName || 'Walk-in Client';
+        } else { // 'registered'
+            const selectedCustomer = usersData?.find(u => u.uid === values.customerId);
+            if (!selectedCustomer) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Selected customer not found.' });
+                setIsSubmitting(false);
+                return;
+            }
+            bookingClientId = selectedCustomer.uid;
+            bookingClientName = selectedCustomer.name || selectedCustomer.email;
+            toastDescription = `An appointment for ${bookingClientName} on ${format(values.date, 'PPP')} at ${values.time} has been booked.`;
         }
-        bookingUser = { uid: selectedCustomer.uid, name: selectedCustomer.name, email: selectedCustomer.email };
     } else if (user) {
-        bookingUser = { uid: user.uid, name: user.name, email: user.email };
+        bookingClientId = user.uid;
+        bookingClientName = user.name || user.email;
     } else {
         toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book an appointment.' });
+        setIsSubmitting(false);
         return;
     }
-
-    setIsSubmitting(true);
 
     const selectedServices = allServices.filter(s => values.services.includes(s.id));
     const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
     const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
     
     const appointmentData = {
-      clientId: bookingUser.uid,
-      clientName: bookingUser.name || bookingUser.email,
+      clientId: bookingClientId,
+      clientName: bookingClientName,
       services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
       totalPrice,
       totalDuration,
@@ -211,7 +254,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       time: values.time,
       barberId: values.barberId === 'any' ? null : values.barberId,
       notes: values.notes || '',
-      status: 'pending',
+      status: appointmentStatus,
       paymentStatus: 'unpaid',
       createdAt: serverTimestamp(),
     };
@@ -220,10 +263,17 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     addDocumentNonBlocking(appointmentsCollection, appointmentData)
         .then(() => {
             toast({
-                title: 'Appointment Request Sent!',
-                description: `Your request for ${format(values.date, 'PPP')} at ${values.time} is pending approval.`,
+                title: toastTitle,
+                description: toastDescription,
             });
-            form.reset({ services: [], notes: '', barberId: 'any', customerId: user?.uid });
+            form.reset({ 
+                services: [], 
+                notes: '', 
+                barberId: 'any',
+                customerType: 'registered',
+                customerId: isAdminOrStaff ? undefined : user?.uid, 
+                walkInName: '', 
+            });
             setDailyBookings(prev => [...prev, appointmentData as Appointment]);
         })
         .catch(() => {
@@ -241,35 +291,81 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {user?.role === 'admin' && (
-          <FormField
-            control={form.control}
-            name="customerId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Customer</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {usersLoading && <SelectItem value="loading" disabled>Loading customers...</SelectItem>}
-                    {usersData?.map((customer) => (
-                      <SelectItem key={customer.uid} value={customer.uid}>
-                        {customer.name} ({customer.email})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                    Select the customer you are booking for.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {isAdminOrStaff && (
+            <div className='space-y-8 rounded-lg border p-4'>
+                <FormField
+                    control={form.control}
+                    name="customerType"
+                    render={({ field }) => (
+                        <FormItem className="space-y-3">
+                            <FormLabel>Customer Type</FormLabel>
+                            <FormControl>
+                                <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="flex space-x-4"
+                                >
+                                <FormItem className="flex items-center space-x-2">
+                                    <FormControl>
+                                    <RadioGroupItem value="registered" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Registered Customer</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2">
+                                    <FormControl>
+                                    <RadioGroupItem value="walk-in" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">Walk-in Client</FormLabel>
+                                </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                {watchedCustomerType === 'registered' ? (
+                     <FormField
+                        control={form.control}
+                        name="customerId"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Customer</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Select a registered customer" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {usersLoading && <SelectItem value="loading" disabled>Loading customers...</SelectItem>}
+                                {usersData?.map((customer) => (
+                                <SelectItem key={customer.uid} value={customer.uid}>
+                                    {customer.name} ({customer.email})
+                                </SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                ) : (
+                    <FormField
+                        control={form.control}
+                        name="walkInName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Walk-in Client Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Enter client's full name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+            </div>
         )}
          <FormField
           control={form.control}

@@ -109,7 +109,10 @@ export default function AppointmentsTable() {
             <TableBody>
                 {sortedAppointments.map((apt) => (
                 <TableRow key={apt.id}>
-                    <TableCell>{apt.clientName}</TableCell>
+                    <TableCell className="font-medium">
+                        {apt.clientName}
+                        {apt.clientId === 'walk-in' && <Badge variant="secondary" className="ml-2">Walk-In</Badge>}
+                    </TableCell>
                     <TableCell className="font-medium max-w-xs truncate">{apt.services.map(s => s.name).join(', ')}</TableCell>
                     <TableCell>PKR {apt.totalPrice?.toLocaleString()}</TableCell>
                     <TableCell>{apt.date}</TableCell>
