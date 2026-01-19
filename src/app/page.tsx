@@ -31,52 +31,54 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
-          {(user?.role === 'admin' || user?.role === 'staff') && (
-            <>
-              <ActionCard
-                href="/overview"
-                icon={<LayoutDashboard className="h-6 w-6" />}
-                title="Overview"
-                description="View key stats and charts."
-              />
-              <ActionCard
-                href="/admin/dashboard"
-                icon={<BookCopy className="h-6 w-6" />}
-                title="Bookings"
-                description="Manage all appointments."
-              />
-            </>
-          )}
-          {user?.role === 'admin' && (
-             <>
+        {user && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            {(user?.role === 'admin' || user?.role === 'staff') && (
+              <>
                 <ActionCard
-                href="/admin/services"
-                icon={<Sparkles className="h-6 w-6" />}
-                title="Manage Services"
-                description="Edit prices and packages."
+                  href="/overview"
+                  icon={<LayoutDashboard className="h-6 w-6" />}
+                  title="Overview"
+                  description="View key stats and charts."
                 />
-             </>
-          )}
-          <ActionCard
-            href="/book"
-            icon={<Scissors className="h-6 w-6" />}
-            title="Book Cut"
-            description="Schedule a new appointment."
-          />
-           <ActionCard
-            href="/my-appointments"
-            icon={<CalendarDays className="h-6 w-6" />}
-            title="My Appointments"
-            description="View your bookings."
-          />
-          <ActionCard
-            href="/packages"
-            icon={<Package className="h-6 w-6" />}
-            title="Specials"
-            description="Check out our packages."
-          />
-        </div>
+                <ActionCard
+                  href="/admin/dashboard"
+                  icon={<BookCopy className="h-6 w-6" />}
+                  title="Bookings"
+                  description="Manage all appointments."
+                />
+              </>
+            )}
+            {user?.role === 'admin' && (
+               <>
+                  <ActionCard
+                  href="/admin/services"
+                  icon={<Sparkles className="h-6 w-6" />}
+                  title="Manage Services"
+                  description="Edit prices and packages."
+                  />
+               </>
+            )}
+            <ActionCard
+              href="/book"
+              icon={<Scissors className="h-6 w-6" />}
+              title="Book Cut"
+              description="Schedule a new appointment."
+            />
+             <ActionCard
+              href="/my-appointments"
+              icon={<CalendarDays className="h-6 w-6" />}
+              title="My Appointments"
+              description="View your bookings."
+            />
+            <ActionCard
+              href="/packages"
+              icon={<Package className="h-6 w-6" />}
+              title="Specials"
+              description="Check out our packages."
+            />
+          </div>
+        )}
       </div>
     </div>
   );
