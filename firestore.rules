@@ -10,25 +10,41 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isEnabled(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
-    }
-    
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    // More efficient helper that reads the requesting user's data once.
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    
+    function isRequestingUserEnabled() {
+      let userDoc = getRequestingUserData();
+      return userDoc.exists && userDoc.data.enabled != false;
+    }
 
     function isRequestingUserAdmin() {
-      return isSignedIn() && request.auth.token.role == 'admin' && isEnabled(request.auth.uid);
+      let userDoc = getRequestingUserData();
+      return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && userDoc.data.role == 'admin';
     }
     
     function isRequestingUserStaff() {
-      return isSignedIn() && request.auth.token.role == 'staff' && isEnabled(request.auth.uid);
+      let userDoc = getRequestingUserData();
+      return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && userDoc.data.role == 'staff';
     }
 
     function isRequestingUserStaffOrAdmin() {
-      return isSignedIn() && (request.auth.token.role == 'admin' || request.auth.token.role == 'staff') && isEnabled(request.auth.uid);
+      let userDoc = getRequestingUserData();
+      return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && (userDoc.data.role == 'admin' || userDoc.data.role == 'staff');
     }
+
+    // This helper is for checking other users, not the requesting user.
+    function isEnabled(userId) {
+        return exists(/databases/$(database)/documents/users/$(userId)) &&
+               get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
+    }
+
 
     // ------------------------------------------------------------------------
     // Collection Rules
@@ -38,8 +54,8 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isRequestingUserAdmin();
       allow list: if isRequestingUserStaffOrAdmin();
       allow create: if isOwner(userId);
-      allow update: if isRequestingUserAdmin() || (isOwner(userId) && isEnabled(userId));
-      allow delete: if isOwner(userId) && isEnabled(userId);
+      allow update: if isRequestingUserAdmin() || (isOwner(userId) && isRequestingUserEnabled());
+      allow delete: if isOwner(userId) && isRequestingUserEnabled();
     }
 
     match /services/{serviceId} {
@@ -53,9 +69,9 @@ service cloud.firestore {
     }
     
     match /appointments/{appointmentId} {
-        allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isEnabled(request.auth.uid)));
-        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isEnabled(request.auth.uid));
-        allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isEnabled(request.auth.uid)));
+        allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
+        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
+        allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         allow update, delete: if isRequestingUserStaffOrAdmin();
     }
 
@@ -64,12 +80,11 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow get, list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
       allow delete: if isRequestingUserAdmin();
       allow update: if false;
     }
   }
 }
-
-    
