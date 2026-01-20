@@ -39,6 +39,11 @@ service cloud.firestore {
       return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && (userDoc.data.role == 'admin' || userDoc.data.role == 'staff');
     }
 
+    function isRequestingUserClient() {
+      let userDoc = getRequestingUserData();
+      return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && userDoc.data.role == 'client';
+    }
+
     // This helper is for checking other users, not the requesting user.
     function isEnabled(userId) {
         return exists(/databases/$(database)/documents/users/$(userId)) &&
@@ -80,10 +85,10 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
-      allow delete: if isRequestingUserAdmin();
-      allow update: if false;
+      allow get, list: if isSignedIn();
+      allow create: if isRequestingUserClient() && request.resource.data.clientId == request.auth.uid;
+      allow update: if isRequestingUserAdmin() || (isRequestingUserClient() && resource.data.clientId == request.auth.uid);
+      allow delete: if isRequestingUserAdmin() || (isRequestingUserClient() && resource.data.clientId == request.auth.uid);
     }
   }
 }
