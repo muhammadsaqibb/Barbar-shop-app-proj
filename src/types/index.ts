@@ -56,16 +56,3 @@ export interface Expense {
   createdAt: any;
   notes?: string;
 }
-
-export interface Review {
-  id: string;
-  appointmentId: string;
-  clientId: string;
-  clientName: string;
-  barberId: string | null;
-  barberName: string | null;
-  services: { name: string }[];
-  rating: number;
-  comment?: string;
-  createdAt: any; // Firestore Timestamp
-}

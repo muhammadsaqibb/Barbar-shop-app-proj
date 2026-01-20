@@ -84,11 +84,5 @@ service cloud.firestore {
     match /expenses/{expenseId} {
       allow read, list, create, update, delete: if isRequestingUserAdmin();
     }
-
-    match /reviews/{reviewId} {
-      allow get, list: if true;
-      allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
-      allow update, delete: if isRequestingUserAdmin();
-    }
   }
 }
