@@ -10,19 +10,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // IMPORTANT: This function performs a 'get' and requires the requesting
-    // user to have permission to read their own user document.
     function getRequestingUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    // Checks if the requesting user's account is enabled.
-    // Defaults to true for legacy users without the 'enabled' field.
     function isRequestingUserEnabled() {
+      // Must be signed-in.
+      // Defaults to true for legacy users without the 'enabled' field.
+      if (!isSignedIn()) { return false; }
       return getRequestingUserData().enabled != false;
     }
     
-    // Checks if the user for a given ID is enabled.
     function isTargetUserEnabled(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
     }
@@ -31,20 +29,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Checks if the requesting user has the 'admin' role.
     function isRequestingUserAdmin() {
-      // Must be signed in, enabled, and have the admin role.
-      return isSignedIn() && isRequestingUserEnabled() && getRequestingUserData().role == 'admin';
+      if (!isSignedIn()) { return false; }
+      let userData = getRequestingUserData();
+      return userData.enabled != false && userData.role == 'admin';
     }
 
-    // Checks if the requesting user has the 'staff' role.
     function isRequestingUserStaff() {
-      // Must be signed in, enabled, and have the staff role.
-      return isSignedIn() && isRequestingUserEnabled() && getRequestingUserData().role == 'staff';
+      if (!isSignedIn()) { return false; }
+      let userData = getRequestingUserData();
+      return userData.enabled != false && userData.role == 'staff';
     }
 
     function isRequestingUserStaffOrAdmin() {
-      return isRequestingUserAdmin() || isRequestingUserStaff();
+      if (!isSignedIn()) { return false; }
+      let userData = getRequestingUserData();
+      return userData.enabled != false && (userData.role == 'admin' || userData.role == 'staff');
     }
 
     // ------------------------------------------------------------------------
@@ -83,7 +83,7 @@ service cloud.firestore {
         // READ: Staff/Admin can read any appointment. A client can only read their own if their account is enabled.
         allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         
-        // LIST: Staff/Admin can list all appointments. A client can list their own if enabled.
+        // LIST: Staff/Admin can list all appointments. Any enabled client can also list (needed for booking form availability).
         allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
         
         // CREATE: A client can create an appointment for themselves if enabled. Admins/staff can create for anyone.
