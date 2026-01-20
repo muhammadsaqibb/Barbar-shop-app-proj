@@ -56,3 +56,17 @@ export interface Expense {
   createdAt: any;
   notes?: string;
 }
+
+export interface Review {
+  id: string;
+  clientId: string;
+  clientName: string;
+  appointmentId: string;
+  rating: number;
+  comment: string;
+  createdAt: any;
+  services: { id: string; name: string }[];
+  barberId: string | null;
+}
+
+    

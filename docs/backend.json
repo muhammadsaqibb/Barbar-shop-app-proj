@@ -272,6 +272,59 @@
         "amount",
         "createdAt"
       ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a review submitted by a client for a completed appointment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the review."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "The ID of the client who wrote the review."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "The name of the client who wrote the review."
+        },
+        "appointmentId": {
+          "type": "string",
+          "description": "The ID of the appointment being reviewed."
+        },
+        "rating": {
+          "type": "number",
+          "description": "The star rating given by the client (1-5)."
+        },
+        "comment": {
+          "type": "string",
+          "description": "The written feedback from the client."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the review was submitted.",
+          "format": "date-time"
+        },
+        "services": {
+            "type": "array",
+            "description": "The services that were part of the reviewed appointment.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "name": {"type": "string"}
+                }
+            }
+        },
+        "barberId": {
+            "type": ["string", "null"],
+            "description": "The ID of the barber for the reviewed appointment."
+        }
+      },
+      "required": ["id", "clientId", "clientName", "appointmentId", "rating", "createdAt"]
     }
   },
   "auth": {
@@ -365,8 +418,26 @@
             }
           ]
         }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores all client reviews for completed appointments.",
+          "params": [
+            {
+              "name": "reviewId",
+              "description": "The unique ID of the review."
+            }
+          ]
+        }
       }
     ],
     "reasoning": "The Firestore structure is designed to support a simple appointment booking system with user authentication and role management. It prioritizes security and scalability by adhering to the principles of Authorization Independence and Structural Segregation. The structure uses path-based ownership for user-specific data (appointments) and separates user profiles from appointment data to simplify security rules and ensure data integrity. This design avoids using `get()` calls in security rules, enabling atomic operations and easier debugging. The `services` and `barbers` collections are top-level collections for easy querying and management by admins.\n\nAuthorization Independence:\nAppointments are stored under `/users/{userId}/appointments/{appointmentId}`, which allows direct ownership-based security rules without needing to fetch parent user data. The `clientId` field in the `Appointment` document is redundant but is kept to make querying for a specific client's appointments easier, if necessary, at the cost of data duplication.\n\nQAPs Support:\nThe structure supports QAPs (Rules are not Filters) effectively. List operations for appointments are scoped to the user's path (`/users/{userId}/appointments`), enabling secure listing of appointments associated with a specific user. The 'users' collection is segregated from the 'appointments' subcollection to ensure that listing users does not expose appointment data. Admins will require custom backend logic, the firestore structure is not aware of admin capabilities."
   }
 }
+
+    

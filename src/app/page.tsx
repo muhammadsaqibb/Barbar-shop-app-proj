@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, Star } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -85,6 +85,12 @@ export default function Home() {
               title="Specials"
               description="Check out our packages."
             />
+            <ActionCard
+              href="/reviews"
+              icon={<Star className="h-6 w-6" />}
+              title="Client Reviews"
+              description="See what others are saying."
+            />
           </div>
         )}
       </div>
@@ -130,3 +136,5 @@ function ActionCard({ href, icon, title, description, disabled }: ActionCardProp
     </Link>
   );
 }
+
+    
