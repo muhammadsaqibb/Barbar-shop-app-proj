@@ -22,6 +22,7 @@ import { collection, query, where } from 'firebase/firestore';
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import useSound from '@/hooks/use-sound';
+import { ModeToggle } from '../mode-toggle';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
@@ -114,7 +115,8 @@ export default function Header() {
         </div>
         
         <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center">
+          <nav className="flex items-center gap-2">
+            <ModeToggle />
             {loading ? (
               <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
             ) : user ? (
