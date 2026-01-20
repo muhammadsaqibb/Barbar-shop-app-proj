@@ -80,8 +80,7 @@ service cloud.firestore {
     }
 
     match /reviews/{reviewId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
       allow delete: if isRequestingUserAdmin();
       allow update: if false;

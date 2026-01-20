@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, Star } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, Star, LogIn } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -31,68 +31,97 @@ export default function Home() {
           </p>
         </div>
 
-        {user && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
-            {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewOverview)) && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
+          {user ? (
+            <>
+              {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewOverview)) && (
+                <ActionCard
+                  href="/overview"
+                  icon={<LayoutDashboard className="h-6 w-6" />}
+                  title="Overview"
+                  description="View key stats and charts."
+                />
+              )}
+               {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
+                <ActionCard
+                  href="/admin/dashboard"
+                  icon={<BookCopy className="h-6 w-6" />}
+                  title="Bookings"
+                  description="Manage all appointments."
+                />
+              )}
+              {user?.role === 'admin' && (
+                 <>
+                    <ActionCard
+                      href="/admin/services"
+                      icon={<Sparkles className="h-6 w-6" />}
+                      title="Manage Services"
+                      description="Edit prices and packages."
+                    />
+                    <ActionCard
+                      href="/admin/expenses"
+                      icon={<Receipt className="h-6 w-6" />}
+                      title="Manage Expenses"
+                      description="Add or track expenses."
+                    />
+                 </>
+              )}
               <ActionCard
-                href="/overview"
-                icon={<LayoutDashboard className="h-6 w-6" />}
-                title="Overview"
-                description="View key stats and charts."
+                href="/book"
+                icon={<Scissors className="h-6 w-6" />}
+                title="Book Cut"
+                description="Schedule a new appointment."
               />
-            )}
-             {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
+              {user?.role === 'client' && (
+               <ActionCard
+                href="/my-appointments"
+                icon={<CalendarDays className="h-6 w-6" />}
+                title="My Appointments"
+                description="View your bookings."
+              />
+              )}
               <ActionCard
-                href="/admin/dashboard"
-                icon={<BookCopy className="h-6 w-6" />}
-                title="Bookings"
-                description="Manage all appointments."
+                href="/packages"
+                icon={<Package className="h-6 w-6" />}
+                title="Specials"
+                description="Check out our packages."
               />
-            )}
-            {user?.role === 'admin' && (
-               <>
-                  <ActionCard
-                    href="/admin/services"
-                    icon={<Sparkles className="h-6 w-6" />}
-                    title="Manage Services"
-                    description="Edit prices and packages."
-                  />
-                  <ActionCard
-                    href="/admin/expenses"
-                    icon={<Receipt className="h-6 w-6" />}
-                    title="Manage Expenses"
-                    description="Add or track expenses."
-                  />
-               </>
-            )}
-            <ActionCard
-              href="/book"
-              icon={<Scissors className="h-6 w-6" />}
-              title="Book Cut"
-              description="Schedule a new appointment."
-            />
-            {user?.role === 'client' && (
-             <ActionCard
-              href="/my-appointments"
-              icon={<CalendarDays className="h-6 w-6" />}
-              title="My Appointments"
-              description="View your bookings."
-            />
-            )}
-            <ActionCard
-              href="/packages"
-              icon={<Package className="h-6 w-6" />}
-              title="Specials"
-              description="Check out our packages."
-            />
-            <ActionCard
-              href="/reviews"
-              icon={<Star className="h-6 w-6" />}
-              title="Client Reviews"
-              description="See what others are saying."
-            />
-          </div>
-        )}
+              <ActionCard
+                href="/reviews"
+                icon={<Star className="h-6 w-6" />}
+                title="Client Reviews"
+                description="See what others are saying."
+              />
+            </>
+          ) : (
+            <>
+              <ActionCard
+                href="/book"
+                icon={<Scissors className="h-6 w-6" />}
+                title="Book Now"
+                description="Schedule an appointment."
+              />
+               <ActionCard
+                href="/packages"
+                icon={<Package className="h-6 w-6" />}
+                title="View Packages"
+                description="Check out our special deals."
+              />
+               <ActionCard
+                href="/reviews"
+                icon={<Star className="h-6 w-6" />}
+                title="Client Reviews"
+                description="See what our clients say."
+              />
+               <ActionCard
+                href="/login"
+                icon={<LogIn className="h-6 w-6" />}
+                title="Login / Sign Up"
+                description="Access your account."
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -136,5 +165,3 @@ function ActionCard({ href, icon, title, description, disabled }: ActionCardProp
     </Link>
   );
 }
-
-    
