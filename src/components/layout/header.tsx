@@ -65,12 +65,12 @@ export default function Header() {
 
   const NavLinks = () => (
     <>
-      {(user?.role === 'admin' || user?.role === 'staff') && (
+      {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewOverview)) && (
         <Button variant="ghost" asChild>
           <Link href="/overview">Overview</Link>
         </Button>
       )}
-      {(user?.role === 'admin' || user?.role === 'staff') && (
+      {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
         <Button variant="ghost" asChild>
             <Link href="/admin/dashboard" className="relative">
               Bookings
@@ -136,7 +136,7 @@ export default function Header() {
                         </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    {(user.role === 'admin' || user.role === 'staff') && (
+                    {(user.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
                         <DropdownMenuItem asChild>
                         <Link href="/admin/dashboard" className="relative">
                             <LayoutDashboard className="mr-2 h-4 w-4" />

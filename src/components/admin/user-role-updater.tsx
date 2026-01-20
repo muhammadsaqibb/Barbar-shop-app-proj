@@ -5,8 +5,8 @@ import { useState } from "react";
 import { useFirebase } from "@/firebase";
 import { useAuth } from "../auth-provider";
 import { useToast } from "@/hooks/use-toast";
-import type { AppUser } from "@/types";
-import { doc, updateDoc } from "firebase/firestore";
+import type { AppUser, StaffPermissions } from "@/types";
+import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
@@ -33,7 +33,22 @@ export default function UserRoleUpdater({ user }: UserRoleUpdaterProps) {
         setLoading(true);
         try {
             const userRef = doc(firestore, 'users', user.uid);
-            await updateDoc(userRef, { role: newRole });
+            
+            if (newRole === 'staff' && user.role !== 'staff') {
+                const defaultPermissions: StaffPermissions = {
+                    canViewBookings: true,
+                    canAddWalkInBookings: true,
+                    canEditBookingStatus: false,
+                    canManageCustomers: false,
+                    canViewOverview: false,
+                };
+                await updateDoc(userRef, { role: newRole, permissions: defaultPermissions });
+            } else if (newRole !== 'staff' && user.role === 'staff') {
+                await updateDoc(userRef, { role: newRole, permissions: deleteField() });
+            } else {
+                await updateDoc(userRef, { role: newRole });
+            }
+
             toast({
                 title: "Role Updated",
                 description: `${user.name || user.email}'s role has been updated to ${newRole}.`,

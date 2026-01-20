@@ -23,6 +23,27 @@
           "type": "string",
           "description": "The user's role within the application (e.g., 'client', 'admin', 'staff').",
           "enum": ["client", "admin", "staff"]
+        },
+        "permissions": {
+          "type": "object",
+          "description": "Granular permissions for staff members.",
+          "properties": {
+            "canViewBookings": {
+              "type": "boolean"
+            },
+            "canAddWalkInBookings": {
+              "type": "boolean"
+            },
+            "canEditBookingStatus": {
+              "type": "boolean"
+            },
+            "canManageCustomers": {
+              "type": "boolean"
+            },
+            "canViewOverview": {
+              "type": "boolean"
+            }
+          }
         }
       },
       "required": [

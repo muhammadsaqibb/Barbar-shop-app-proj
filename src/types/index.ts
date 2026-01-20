@@ -1,9 +1,19 @@
+
+export interface StaffPermissions {
+  canViewBookings: boolean;
+  canAddWalkInBookings: boolean;
+  canEditBookingStatus: boolean;
+  canManageCustomers: boolean;
+  canViewOverview: boolean;
+}
+
 export interface AppUser {
   id?: string; // from firestore doc id
   uid: string;
   email: string | null;
   name: string | null;
   role: 'client' | 'admin' | 'staff';
+  permissions?: StaffPermissions;
 }
 
 export interface Service {

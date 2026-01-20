@@ -33,21 +33,21 @@ export default function Home() {
 
         {user && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
-            {(user?.role === 'admin' || user?.role === 'staff') && (
-              <>
-                <ActionCard
-                  href="/overview"
-                  icon={<LayoutDashboard className="h-6 w-6" />}
-                  title="Overview"
-                  description="View key stats and charts."
-                />
-                <ActionCard
-                  href="/admin/dashboard"
-                  icon={<BookCopy className="h-6 w-6" />}
-                  title="Bookings"
-                  description="Manage all appointments."
-                />
-              </>
+            {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewOverview)) && (
+              <ActionCard
+                href="/overview"
+                icon={<LayoutDashboard className="h-6 w-6" />}
+                title="Overview"
+                description="View key stats and charts."
+              />
+            )}
+             {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
+              <ActionCard
+                href="/admin/dashboard"
+                icon={<BookCopy className="h-6 w-6" />}
+                title="Bookings"
+                description="Manage all appointments."
+              />
             )}
             {user?.role === 'admin' && (
                <>
