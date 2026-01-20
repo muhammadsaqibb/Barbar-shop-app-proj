@@ -10,33 +10,41 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
+    // IMPORTANT: This function performs a 'get' and requires the requesting
+    // user to have permission to read their own user document.
+    function getRequestingUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isUserEnabled(userId) {
-      // Allow access if 'enabled' is not explicitly false. Defaults to enabled for legacy users.
-      return getUserData(userId).enabled != false;
+    // Checks if the requesting user's account is enabled.
+    // Defaults to true for legacy users without the 'enabled' field.
+    function isRequestingUserEnabled() {
+      return getRequestingUserData().enabled != false;
+    }
+    
+    // Checks if the user for a given ID is enabled.
+    function isTargetUserEnabled(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function getSignedInUserRole() {
-      return getUserData(request.auth.uid).role;
+    // Checks if the requesting user has the 'admin' role.
+    function isRequestingUserAdmin() {
+      // Must be signed in, enabled, and have the admin role.
+      return isSignedIn() && isRequestingUserEnabled() && getRequestingUserData().role == 'admin';
     }
 
-    function isAdmin() {
-      return isSignedIn() && isUserEnabled(request.auth.uid) && getSignedInUserRole() == 'admin';
+    // Checks if the requesting user has the 'staff' role.
+    function isRequestingUserStaff() {
+      // Must be signed in, enabled, and have the staff role.
+      return isSignedIn() && isRequestingUserEnabled() && getRequestingUserData().role == 'staff';
     }
 
-    function isStaff() {
-      return isSignedIn() && isUserEnabled(request.auth.uid) && getSignedInUserRole() == 'staff';
-    }
-
-    function isStaffOrAdmin() {
-      return isAdmin() || isStaff();
+    function isRequestingUserStaffOrAdmin() {
+      return isRequestingUserAdmin() || isRequestingUserStaff();
     }
 
     // ------------------------------------------------------------------------
@@ -44,39 +52,49 @@ service cloud.firestore {
     // ------------------------------------------------------------------------
 
     match /users/{userId} {
-      allow get: if (isOwner(userId) && isUserEnabled(userId)) || isAdmin();
-      allow list: if isStaffOrAdmin();
-      allow create: if isOwner(userId); // A user can only create their own doc upon signup
-      allow update: if (isOwner(userId) && isUserEnabled(userId)) || isAdmin(); // Admin can update any user
-      allow delete: if (isOwner(userId) && isUserEnabled(userId));
+      // READ: An admin can get any user doc. A user can get their own doc.
+      // This is the key rule that allows other helper functions to work.
+      allow get: if isOwner(userId) || isRequestingUserAdmin();
+
+      // LIST: Only admins and staff can list users (e.g., for the booking form dropdown).
+      allow list: if isRequestingUserStaffOrAdmin();
+      
+      // CREATE: A user can create their own document on signup. The 'enabled' flag is set by client code.
+      allow create: if isOwner(userId);
+      
+      // UPDATE: An admin can update any user. A user can only update their own doc if they are enabled.
+      allow update: if isRequestingUserAdmin() || (isOwner(userId) && isTargetUserEnabled(userId));
+      
+      // DELETE: A user can delete their own account if enabled.
+      allow delete: if isOwner(userId) && isTargetUserEnabled(userId);
     }
 
     match /services/{serviceId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isRequestingUserAdmin();
     }
 
     match /barbers/{barberId} {
       allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isRequestingUserAdmin();
     }
     
     match /appointments/{appointmentId} {
-        // READ: An admin or staff can read any appointment. A client can only read their own if enabled.
-        allow get: if isSignedIn() && (isStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isUserEnabled(request.auth.uid)));
+        // READ: Staff/Admin can read any appointment. A client can only read their own if their account is enabled.
+        allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         
-        // LIST: Admins and staff can list all appointments. A client can only list their own via a query if enabled.
-        allow list: if isSignedIn() && (isStaffOrAdmin() || isUserEnabled(request.auth.uid));
+        // LIST: Staff/Admin can list all appointments. A client can list their own if enabled.
+        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
         
         // CREATE: A client can create an appointment for themselves if enabled. Admins/staff can create for anyone.
-        allow create: if isSignedIn() && (isStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isUserEnabled(request.auth.uid)));
+        allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         
         // UPDATE/DELETE: Only admins or staff can modify or cancel any appointment.
-        allow update, delete: if isStaffOrAdmin();
+        allow update, delete: if isRequestingUserStaffOrAdmin();
     }
 
     match /expenses/{expenseId} {
-      allow read, list, create, update, delete: if isAdmin();
+      allow read, list, create, update, delete: if isRequestingUserAdmin();
     }
   }
 }
