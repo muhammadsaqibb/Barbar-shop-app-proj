@@ -9,19 +9,27 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import UserRoleUpdater from './user-role-updater';
 import { Button } from '../ui/button';
-import { Settings } from 'lucide-react';
+import { Edit, Settings } from 'lucide-react';
 import { StaffPermissionsDialog } from './staff-permissions-dialog';
+import { UserEditDialog } from './user-edit-dialog';
+import { Badge } from '../ui/badge';
 
 
 export default function UsersTable() {
   const { firestore } = useFirebase();
 
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
 
   const handleManagePermissions = (user: AppUser) => {
     setSelectedUser(user);
     setPermissionsDialogOpen(true);
+  };
+  
+  const handleEditUser = (user: AppUser) => {
+    setSelectedUser(user);
+    setEditDialogOpen(true);
   };
 
   const usersCollectionRef = useMemoFirebase(
@@ -57,6 +65,7 @@ export default function UsersTable() {
                 <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -66,16 +75,27 @@ export default function UsersTable() {
                 <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                        <Badge variant={user.enabled !== false ? 'default' : 'destructive'}>
+                            {user.enabled !== false ? 'Active' : 'Disabled'}
+                        </Badge>
+                    </TableCell>
                     <TableCell className="w-[180px]">
                       <UserRoleUpdater user={user} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {user.role === 'staff' && (
-                        <Button variant="outline" size="sm" onClick={() => handleManagePermissions(user)}>
-                            <Settings className="mr-2 h-4 w-4" />
-                            Permissions
+                        <div className="flex items-center justify-end gap-2">
+                        {user.role === 'staff' && (
+                            <Button variant="outline" size="sm" onClick={() => handleManagePermissions(user)}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                Permissions
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => handleEditUser(user)}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">Edit User</span>
                         </Button>
-                      )}
+                        </div>
                     </TableCell>
                 </TableRow>
                 ))}
@@ -85,6 +105,11 @@ export default function UsersTable() {
     <StaffPermissionsDialog 
         isOpen={permissionsDialogOpen}
         onOpenChange={setPermissionsDialogOpen}
+        user={selectedUser}
+    />
+     <UserEditDialog
+        isOpen={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
         user={selectedUser}
     />
     </>

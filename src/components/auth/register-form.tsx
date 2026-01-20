@@ -58,6 +58,7 @@ export default function RegisterForm() {
         name: values.name,
         email: values.email,
         role: 'client',
+        enabled: true,
       };
       await setDoc(userDocRef, newUser);
 

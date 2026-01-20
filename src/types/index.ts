@@ -14,6 +14,7 @@ export interface AppUser {
   name: string | null;
   role: 'client' | 'admin' | 'staff';
   permissions?: StaffPermissions;
+  enabled?: boolean;
 }
 
 export interface Service {
