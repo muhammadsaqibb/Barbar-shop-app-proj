@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, Star, LogIn } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -86,12 +86,6 @@ export default function Home() {
                 title="Specials"
                 description="Check out our packages."
               />
-              <ActionCard
-                href="/reviews"
-                icon={<Star className="h-6 w-6" />}
-                title="Client Reviews"
-                description="See what others are saying."
-              />
             </>
           ) : (
             <>
@@ -106,12 +100,6 @@ export default function Home() {
                 icon={<Package className="h-6 w-6" />}
                 title="View Packages"
                 description="Check out our special deals."
-              />
-               <ActionCard
-                href="/reviews"
-                icon={<Star className="h-6 w-6" />}
-                title="Client Reviews"
-                description="See what our clients say."
               />
                <ActionCard
                 href="/login"
