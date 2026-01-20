@@ -272,6 +272,46 @@
         "amount",
         "createdAt"
       ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a client review for a completed appointment.",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "appointmentId": {
+          "type": "string"
+        },
+        "clientId": {
+          "type": "string"
+        },
+        "clientName": {
+          "type": "string"
+        },
+        "rating": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "comment": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "appointmentId",
+        "clientId",
+        "clientName",
+        "rating",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -362,6 +402,22 @@
             {
               "name": "expenseId",
               "description": "The unique ID of the expense."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores all client reviews for completed appointments.",
+          "params": [
+            {
+              "name": "reviewId",
+              "description": "The unique ID of the review."
             }
           ]
         }

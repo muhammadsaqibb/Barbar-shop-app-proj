@@ -10,29 +10,29 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getRole() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    function getRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.role;
     }
 
     function isEnabled(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
     }
-
+    
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
     function isRequestingUserAdmin() {
-      return isSignedIn() && isEnabled(request.auth.uid) && getRole() == 'admin';
+      return isSignedIn() && getRole(request.auth.uid) == 'admin' && isEnabled(request.auth.uid);
     }
-
+    
     function isRequestingUserStaff() {
-      return isSignedIn() && isEnabled(request.auth.uid) && getRole() == 'staff';
+      return isSignedIn() && getRole(request.auth.uid) == 'staff' && isEnabled(request.auth.uid);
     }
 
     function isRequestingUserStaffOrAdmin() {
-      let userRole = getRole();
-      return isSignedIn() && isEnabled(request.auth.uid) && (userRole == 'admin' || userRole == 'staff');
+      let userRole = getRole(request.auth.uid);
+      return isSignedIn() && (userRole == 'admin' || userRole == 'staff') && isEnabled(request.auth.uid);
     }
 
     // ------------------------------------------------------------------------
@@ -83,6 +83,12 @@ service cloud.firestore {
 
     match /expenses/{expenseId} {
       allow read, list, create, update, delete: if isRequestingUserAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow get, list: if true;
+      allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
+      allow update, delete: if isRequestingUserAdmin();
     }
   }
 }
