@@ -10,18 +10,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function getRequestingUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function getRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
-    function isRequestingUserEnabled() {
-      // Must be signed-in.
-      // Defaults to true for legacy users without the 'enabled' field.
-      if (!isSignedIn()) { return false; }
-      return getRequestingUserData().enabled != false;
-    }
-    
-    function isTargetUserEnabled(userId) {
+    function isEnabled(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
     }
 
@@ -30,21 +23,16 @@ service cloud.firestore {
     }
 
     function isRequestingUserAdmin() {
-      if (!isSignedIn()) { return false; }
-      let userData = getRequestingUserData();
-      return userData.enabled != false && userData.role == 'admin';
+      return isSignedIn() && isEnabled(request.auth.uid) && getRole() == 'admin';
     }
 
     function isRequestingUserStaff() {
-      if (!isSignedIn()) { return false; }
-      let userData = getRequestingUserData();
-      return userData.enabled != false && userData.role == 'staff';
+      return isSignedIn() && isEnabled(request.auth.uid) && getRole() == 'staff';
     }
 
     function isRequestingUserStaffOrAdmin() {
-      if (!isSignedIn()) { return false; }
-      let userData = getRequestingUserData();
-      return userData.enabled != false && (userData.role == 'admin' || userData.role == 'staff');
+      let userRole = getRole();
+      return isSignedIn() && isEnabled(request.auth.uid) && (userRole == 'admin' || userRole == 'staff');
     }
 
     // ------------------------------------------------------------------------
@@ -63,10 +51,10 @@ service cloud.firestore {
       allow create: if isOwner(userId);
       
       // UPDATE: An admin can update any user. A user can only update their own doc if they are enabled.
-      allow update: if isRequestingUserAdmin() || (isOwner(userId) && isTargetUserEnabled(userId));
+      allow update: if isRequestingUserAdmin() || (isOwner(userId) && isEnabled(userId));
       
       // DELETE: A user can delete their own account if enabled.
-      allow delete: if isOwner(userId) && isTargetUserEnabled(userId);
+      allow delete: if isOwner(userId) && isEnabled(userId);
     }
 
     match /services/{serviceId} {
@@ -81,13 +69,13 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
         // READ: Staff/Admin can read any appointment. A client can only read their own if their account is enabled.
-        allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
+        allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isEnabled(request.auth.uid)));
         
         // LIST: Staff/Admin can list all appointments. Any enabled client can also list (needed for booking form availability).
-        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
+        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isEnabled(request.auth.uid));
         
         // CREATE: A client can create an appointment for themselves if enabled. Admins/staff can create for anyone.
-        allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
+        allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isEnabled(request.auth.uid)));
         
         // UPDATE/DELETE: Only admins or staff can modify or cancel any appointment.
         allow update, delete: if isRequestingUserStaffOrAdmin();
