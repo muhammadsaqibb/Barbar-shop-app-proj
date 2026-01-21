@@ -152,32 +152,36 @@ export default function Header() {
                         </DropdownMenuItem>
                     )}
                     {user.role === 'admin' && (
-                        <>
-                            <DropdownMenuItem asChild>
-                                <Link href="/admin/users">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>Manage Users</span>
-                                </Link>
-                            </DropdownMenuItem>
-                             <DropdownMenuItem asChild>
-                                <Link href="/admin/barbers">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    <span>Manage Barbers</span>
-                                </Link>
-                            </DropdownMenuItem>
-                             <DropdownMenuItem asChild>
-                                <Link href="/admin/services">
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    <span>Manage Services</span>
-                                </Link>
-                            </DropdownMenuItem>
-                             <DropdownMenuItem asChild>
-                                <Link href="/admin/expenses">
-                                    <Receipt className="mr-2 h-4 w-4" />
-                                    <span>Manage Expenses</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </>
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/users">
+                                <Users className="mr-2 h-4 w-4" />
+                                <span>Manage Users</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/barbers">
+                                <Users className="mr-2 h-4 w-4" />
+                                <span>Manage Barbers</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/services">
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                <span>Manage Services</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
+                    {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/expenses">
+                                <Receipt className="mr-2 h-4 w-4" />
+                                <span>Manage Expenses</span>
+                            </Link>
+                        </DropdownMenuItem>
                     )}
                     <DropdownMenuItem>
                         <UserIcon className="mr-2 h-4 w-4" />

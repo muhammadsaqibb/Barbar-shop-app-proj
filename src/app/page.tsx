@@ -51,26 +51,28 @@ export default function Home() {
                 />
               )}
               {user?.role === 'admin' && (
-                 <>
-                    <ActionCard
-                      href="/admin/services"
-                      icon={<Sparkles className="h-6 w-6" />}
-                      title="Manage Services"
-                      description="Edit prices and packages."
-                    />
-                    <ActionCard
-                      href="/admin/barbers"
-                      icon={<Users className="h-6 w-6" />}
-                      title="Manage Barbers"
-                      description="Add or edit barbers."
-                    />
-                    <ActionCard
-                      href="/admin/expenses"
-                      icon={<Receipt className="h-6 w-6" />}
-                      title="Manage Expenses"
-                      description="Add or track expenses."
-                    />
-                 </>
+                <ActionCard
+                    href="/admin/services"
+                    icon={<Sparkles className="h-6 w-6" />}
+                    title="Manage Services"
+                    description="Edit prices and packages."
+                />
+              )}
+              {user?.role === 'admin' && (
+                <ActionCard
+                    href="/admin/barbers"
+                    icon={<Users className="h-6 w-6" />}
+                    title="Manage Barbers"
+                    description="Add or edit barbers."
+                />
+              )}
+              {user?.role === 'admin' && (
+                <ActionCard
+                    href="/admin/expenses"
+                    icon={<Receipt className="h-6 w-6" />}
+                    title="Manage Expenses"
+                    description="Add or track expenses."
+                />
               )}
               <ActionCard
                 href="/book"
@@ -112,6 +114,12 @@ export default function Home() {
                 icon={<LogIn className="h-6 w-6" />}
                 title="Login / Sign Up"
                 description="Access your account."
+              />
+               <ActionCard
+                href="/reviews"
+                icon={<Users className="h-6 w-6" />}
+                title="Client Reviews"
+                description="See what our clients say."
               />
             </>
           )}
