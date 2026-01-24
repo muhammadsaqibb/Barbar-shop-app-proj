@@ -110,14 +110,6 @@ const ALL_ACTION_CARDS: ActionCardData[] = [
         isVisible: (user) => !!user,
     },
     {
-        id: 'profile',
-        href: '/my-appointments',
-        icon: <UserIcon className="h-6 w-6" />,
-        titleKey: 'profile',
-        descriptionKey: 'profile_desc',
-        isVisible: (user) => !!user,
-    },
-    {
         id: 'packages',
         href: '/packages',
         icon: <Package className="h-6 w-6" />,
