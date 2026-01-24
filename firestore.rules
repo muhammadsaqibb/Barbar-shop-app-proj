@@ -76,7 +76,7 @@ service cloud.firestore {
         allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         // This rule is intentionally broad to allow clients to check for availability.
         // The `get` rule still protects the full appointment details.
-        allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
+        allow list: if isSignedIn();
         allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         allow update, delete: if isRequestingUserStaffOrAdmin();
     }
@@ -88,6 +88,13 @@ service cloud.firestore {
     match /shopSettings/{settingsId} {
       allow read: if isSignedIn();
       allow write: if isRequestingUserAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow list, get: if isSignedIn();
+      allow create: if isRequestingUserClient() && request.resource.data.userId == request.auth.uid;
+      allow update: if isRequestingUserAdmin() || (isRequestingUserClient() && resource.data.userId == request.auth.uid);
+      allow delete: if isRequestingUserAdmin() || (isRequestingUserClient() && resource.data.userId == request.auth.uid);
     }
   }
 }

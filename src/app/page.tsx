@@ -109,7 +109,7 @@ export default function Home() {
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}
                 title="Packages"
-                description="Check out our special deals."
+                description="Check out our curated packages."
               />
             </>
           ) : (
@@ -124,7 +124,7 @@ export default function Home() {
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}
                 title="View Packages"
-                description="Check out our special deals."
+                description="Check out our curated packages."
               />
                <ActionCard
                 href="/login"
