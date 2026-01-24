@@ -33,6 +33,8 @@ import {
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useRouter } from "next/navigation";
+
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -303,12 +305,9 @@ interface ActionCardProps {
   title: string;
   description: string;
   disabled?: boolean;
-  isDraggable?: boolean;
-  isDragging?: boolean;
 }
 
 function SortableActionCard(props: ActionCardProps & { id: string }) {
-    const justDragged = useRef(false);
     const {
         attributes,
         listeners,
@@ -318,9 +317,12 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
         isDragging,
     } = useSortable({ id: props.id });
 
+    // This ref tracks if a drag event has occurred during the current interaction.
+    const hasDragged = useRef(false);
+
     useEffect(() => {
         if (isDragging) {
-          justDragged.current = true;
+            hasDragged.current = true;
         }
     }, [isDragging]);
 
@@ -332,23 +334,36 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
     };
 
     const handleClick = (e: React.MouseEvent) => {
-        if (justDragged.current) {
-          e.preventDefault();
-          justDragged.current = false;
+        // When a click event fires, check if a drag has just happened.
+        if (hasDragged.current) {
+            // If yes, prevent the link from navigating.
+            e.preventDefault();
         }
     };
+    
+    // This handler resets the drag flag at the beginning of any pointer interaction.
+    const handlePointerDown = () => {
+        hasDragged.current = false;
+    }
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab">
-            <ActionCard {...props} isDraggable={true} onClick={handleClick} />
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            {...attributes} 
+            {...listeners} 
+            onPointerDown={handlePointerDown}
+            className="touch-none cursor-grab"
+        >
+            <ActionCard {...props} onClick={handleClick} />
         </div>
     );
 }
 
 
-function ActionCard({ href, icon, title, description, disabled, isDraggable, onClick }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void }) {
+function ActionCard({ href, icon, title, description, disabled, onClick }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void }) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${!isDraggable ? 'hover:animate-shake' : ''}`}>
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} hover:animate-shake`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
