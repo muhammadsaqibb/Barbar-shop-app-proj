@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -100,22 +99,12 @@ export default function Home() {
                 title={t('book_cut_title')}
                 description={t('book_cut_desc')}
               />
-              {user?.role === 'client' && (
-               <ActionCard
+              <ActionCard
                 href="/my-appointments"
-                icon={<CalendarDays className="h-6 w-6" />}
-                title={t('history_title')}
-                description={t('history_desc')}
+                icon={<UserIcon className="h-6 w-6" />}
+                title={t('profile')}
+                description={t('profile_desc')}
               />
-              )}
-              {user?.role === 'client' && (
-                <ActionCard
-                  href="/my-appointments"
-                  icon={<UserIcon className="h-6 w-6" />}
-                  title={t('profile')}
-                  description={t('profile_desc')}
-                />
-              )}
               <ActionCard
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -90,11 +89,6 @@ export default function Header() {
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
           <Link href="/admin/users">{t('manage_users')}</Link>
-        </Button>
-      )}
-      {user?.role === 'admin' && (
-        <Button variant="ghost" asChild>
-          <Link href="/admin/settings">{t('opening_hours')}</Link>
         </Button>
       )}
     </>
