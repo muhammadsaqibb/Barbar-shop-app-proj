@@ -7,15 +7,31 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { 
     Scissors, Sparkles, LayoutDashboard, Package, BookCopy, Receipt, 
-    LogIn, Users, Settings, User as UserIcon, Pencil, Save, X, RotateCcw,
-    MoveUp, MoveDown
+    LogIn, Users, Settings, User as UserIcon, RotateCcw,
 } from "lucide-react";
 import { useTranslation } from "@/context/language-provider";
-import type { AppUser, StaffPermissions } from "@/types";
+import type { AppUser } from "@/types";
 import type { Translations } from "@/context/language-provider";
 import { useState, useEffect, useMemo } from "react";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -141,56 +157,48 @@ export default function Home() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   
-  const [editMode, setEditMode] = useState(false);
   const [cardLayout, setCardLayout] = useState<ActionCardData[]>([]);
-  const [initialLayout, setInitialLayout] = useState<ActionCardData[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+        activationConstraint: {
+            distance: 8,
+        },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const displayName = formatUserDisplayName(user?.name, user?.email);
 
+  const visibleCards = useMemo(() => ALL_ACTION_CARDS.filter(card => card.isVisible(user)), [user]);
+
   useEffect(() => {
-    const visibleCards = ALL_ACTION_CARDS.filter(card => card.isVisible(user));
     const savedOrder = user?.homepageLayout;
     
+    let sortedCards = [...visibleCards];
+
     if (savedOrder) {
-      visibleCards.sort((a, b) => {
-        const indexA = savedOrder.indexOf(a.id);
-        const indexB = savedOrder.indexOf(b.id);
-        
-        if (indexA === -1 && indexB === -1) {
-            const defaultIndexA = ALL_ACTION_CARDS.findIndex(c => c.id === a.id);
-            const defaultIndexB = ALL_ACTION_CARDS.findIndex(c => c.id === b.id);
-            return defaultIndexA - defaultIndexB;
-        }
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return indexA - indexB;
-      });
+      const cardMap = new Map(visibleCards.map(c => [c.id, c]));
+      const orderedVisibleCards = savedOrder
+        .map(id => cardMap.get(id))
+        .filter((c): c is ActionCardData => !!c);
+      
+      const orderedVisibleIds = new Set(orderedVisibleCards.map(c => c.id));
+      const newCards = visibleCards.filter(c => !orderedVisibleIds.has(c.id));
+      
+      sortedCards = [...orderedVisibleCards, ...newCards];
     }
 
-    setCardLayout(visibleCards);
-    if (!editMode) {
-      setInitialLayout(visibleCards);
-    }
-  }, [user, editMode]);
+    setCardLayout(sortedCards);
+  }, [user, visibleCards]);
 
-  const handleMove = (index: number, direction: 'up' | 'down') => {
-    const newLayout = [...cardLayout];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex >= 0 && targetIndex < newLayout.length) {
-      [newLayout[index], newLayout[targetIndex]] = [newLayout[targetIndex], newLayout[index]];
-      setCardLayout(newLayout);
-    }
-  };
-
-  const handleSaveLayout = async () => {
+  const handleSaveLayout = async (newOrder: string[]) => {
     if (!user) return;
-    const newOrder = cardLayout.map(card => card.id);
     const userRef = doc(firestore, 'users', user.uid);
     try {
       await updateDoc(userRef, { homepageLayout: newOrder });
-      setEditMode(false);
-      setInitialLayout(cardLayout);
-      toast({ title: "Layout Saved", description: "Your homepage layout has been updated." });
     } catch (error) {
       toast({ variant: "destructive", title: "Save Failed", description: "Could not save your layout." });
     }
@@ -201,18 +209,44 @@ export default function Home() {
     const userRef = doc(firestore, 'users', user.uid);
      try {
       await updateDoc(userRef, { homepageLayout: deleteField() });
-      setEditMode(false);
-      // The useEffect will trigger a re-render with the default layout
+      setCardLayout(visibleCards);
       toast({ title: "Layout Reset", description: "Your homepage layout has been reset to default." });
     } catch (error) {
       toast({ variant: "destructive", title: "Reset Failed", description: "Could not reset your layout." });
     }
   };
 
-  const handleCancel = () => {
-    setCardLayout(initialLayout);
-    setEditMode(false);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setCardLayout((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const newLayout = arrayMove(items, oldIndex, newIndex);
+        
+        const newOrder = newLayout.map(card => card.id);
+        handleSaveLayout(newOrder);
+
+        return newLayout;
+      });
+    }
   };
+  
+  const cardIds = useMemo(() => cardLayout.map(c => c.id), [cardLayout]);
+
+  const mainContent = (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
+        {cardLayout.map((card) => (
+            <ActionCard
+                key={card.id}
+                href={card.href}
+                icon={card.icon}
+                title={t(card.titleKey)}
+                description={t(card.descriptionKey)}
+            />
+        ))}
+    </div>
+  );
 
   return (
     <div className="w-full">
@@ -229,39 +263,61 @@ export default function Home() {
 
         {user && (
             <div className="flex justify-center mb-8 gap-4">
-                {editMode ? (
-                    <>
-                        <Button onClick={handleSaveLayout}><Save className="mr-2 h-4 w-4" /> Save Layout</Button>
-                        <Button variant="outline" onClick={handleCancel}><X className="mr-2 h-4 w-4" /> Cancel</Button>
-                        <Button variant="destructive" onClick={handleResetLayout}><RotateCcw className="mr-2 h-4 w-4" /> Reset</Button>
-                    </>
-                ) : (
-                    <Button variant="outline" onClick={() => setEditMode(true)}>
-                        <Pencil className="mr-2 h-4 w-4" /> Customize Layout
-                    </Button>
-                )}
+                <Button variant="outline" onClick={handleResetLayout}><RotateCcw className="mr-2 h-4 w-4" /> Reset Layout</Button>
             </div>
         )}
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
-            {cardLayout.map((card, index) => (
-                <ActionCard
-                    key={card.id}
-                    href={card.href}
-                    icon={card.icon}
-                    title={t(card.titleKey)}
-                    description={t(card.descriptionKey)}
-                    editMode={editMode}
-                    isFirst={index === 0}
-                    isLast={index === cardLayout.length - 1}
-                    onMoveUp={() => handleMove(index, 'up')}
-                    onMoveDown={() => handleMove(index, 'down')}
-                />
-            ))}
-        </div>
+        {user ? (
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext items={cardIds} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
+                        {cardLayout.map((card) => (
+                            <SortableActionCard 
+                                key={card.id} 
+                                id={card.id}
+                                href={card.href}
+                                icon={card.icon}
+                                title={t(card.titleKey)}
+                                description={t(card.descriptionKey)}
+                            />
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
+        ) : mainContent }
       </div>
     </div>
   );
+}
+
+
+function SortableActionCard(props: ActionCardProps & { id: string }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: props.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 10 : 'auto',
+        opacity: isDragging ? 0.8 : 1,
+        cursor: 'grab',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+            <ActionCard {...props} isDraggable={true} />
+        </div>
+    );
 }
 
 interface ActionCardProps {
@@ -270,26 +326,12 @@ interface ActionCardProps {
   title: string;
   description: string;
   disabled?: boolean;
-  editMode?: boolean;
-  isFirst?: boolean;
-  isLast?: boolean;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
+  isDraggable?: boolean;
 }
 
-function ActionCard({ href, icon, title, description, disabled, editMode, isFirst, isLast, onMoveUp, onMoveDown }: ActionCardProps) {
+function ActionCard({ href, icon, title, description, disabled, isDraggable }: ActionCardProps) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${editMode ? 'hover:animate-none' : 'hover:animate-shake'}`}>
-      {editMode && (
-          <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onMoveUp} disabled={isFirst}>
-                  <MoveUp className="h-4 w-4" />
-              </Button>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onMoveDown} disabled={isLast}>
-                  <MoveDown className="h-4 w-4" />
-              </Button>
-          </div>
-      )}
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${isDraggable ? '' : 'hover:animate-shake'}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
@@ -307,8 +349,8 @@ function ActionCard({ href, icon, title, description, disabled, editMode, isFirs
     </Card>
   );
 
-  if (disabled || editMode) {
-    return <div className={`cursor-not-allowed h-full ${editMode ? 'cursor-grab' : ''}`}>{content}</div>
+  if (disabled || isDraggable) {
+    return <div className={`h-full ${isDraggable ? 'cursor-grab' : 'cursor-not-allowed'}`}>{content}</div>
   }
 
   return (
