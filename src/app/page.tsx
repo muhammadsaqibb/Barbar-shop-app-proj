@@ -77,14 +77,6 @@ const ALL_ACTION_CARDS: ActionCardData[] = [
         isVisible: (user) => user?.role === 'admin',
     },
     {
-        id: 'opening_hours',
-        href: '/admin/settings',
-        icon: <Settings className="h-6 w-6" />,
-        titleKey: 'opening_hours',
-        descriptionKey: 'opening_hours_desc',
-        isVisible: (user) => user?.role === 'admin',
-    },
-    {
         id: 'manage_expenses',
         href: '/admin/expenses',
         icon: <Receipt className="h-6 w-6" />,
