@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn, Users } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn, Users, Settings } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -52,6 +53,14 @@ export default function Home() {
               )}
               {user?.role === 'admin' && (
                 <ActionCard
+                    href="/admin/users"
+                    icon={<Users className="h-6 w-6" />}
+                    title="Manage Users"
+                    description="Edit roles and permissions."
+                />
+              )}
+              {user?.role === 'admin' && (
+                <ActionCard
                     href="/admin/services"
                     icon={<Sparkles className="h-6 w-6" />}
                     title="Manage Services"
@@ -64,6 +73,14 @@ export default function Home() {
                     icon={<Users className="h-6 w-6" />}
                     title="Manage Barbers"
                     description="Add or edit barbers."
+                />
+              )}
+               {user?.role === 'admin' && (
+                <ActionCard
+                    href="/admin/settings"
+                    icon={<Settings className="h-6 w-6" />}
+                    title="Shop Settings"
+                    description="Configure operating hours."
                 />
               )}
               {user?.role === 'admin' && (
@@ -84,15 +101,15 @@ export default function Home() {
                <ActionCard
                 href="/my-appointments"
                 icon={<CalendarDays className="h-6 w-6" />}
-                title="My Appointments"
+                title="History"
                 description="View your bookings."
               />
               )}
               <ActionCard
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}
-                title="Specials"
-                description="Check out our packages."
+                title="Packages"
+                description="Check out our special deals."
               />
             </>
           ) : (

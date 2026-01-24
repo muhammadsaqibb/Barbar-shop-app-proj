@@ -83,5 +83,10 @@ service cloud.firestore {
     match /expenses/{expenseId} {
       allow read, list, create, update, delete: if isRequestingUserAdmin();
     }
+
+    match /shopSettings/{settingsId} {
+      allow read: if isSignedIn();
+      allow write: if isRequestingUserAdmin();
+    }
   }
 }

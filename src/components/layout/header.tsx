@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -86,6 +87,11 @@ export default function Header() {
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
           <Link href="/admin/users">Manage Users</Link>
+        </Button>
+      )}
+      {user?.role === 'admin' && (
+        <Button variant="ghost" asChild>
+          <Link href="/admin/settings">Shop Settings</Link>
         </Button>
       )}
     </>
@@ -187,10 +193,14 @@ export default function Header() {
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
-                    </DropdownMenuItem>
+                    {user.role === 'admin' && (
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Shop Settings</span>
+                            </Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />

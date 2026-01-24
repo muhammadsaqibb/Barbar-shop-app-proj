@@ -1,4 +1,5 @@
 
+
 export interface StaffPermissions {
   canViewBookings: boolean;
   canAddWalkInBookings: boolean;
@@ -46,6 +47,7 @@ export interface Appointment {
   barberId: string | null;
   notes: string;
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
+  paymentMethod: 'cash' | 'online';
   paymentStatus: 'paid' | 'unpaid';
   createdAt: any;
   bookedBy?: string;
@@ -59,4 +61,9 @@ export interface Expense {
   notes?: string;
 }
 
+export interface ShopSettings {
+  id?: string;
+  openingTime: string; // e.g. "09:00"
+  closingTime: string; // e.g. "18:00"
+}
     

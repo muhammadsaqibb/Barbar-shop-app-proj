@@ -143,6 +143,14 @@
             "no-show"
           ]
         },
+        "paymentMethod": {
+          "type": "string",
+          "description": "The selected payment method for the appointment.",
+          "enum": [
+            "cash",
+            "online"
+          ]
+        },
         "paymentStatus": {
           "type": "string",
           "description": "The payment status of the appointment.",
@@ -174,6 +182,7 @@
         "date",
         "time",
         "status",
+        "paymentMethod",
         "paymentStatus",
         "createdAt"
       ]
@@ -284,6 +293,26 @@
         "amount",
         "createdAt"
       ]
+    },
+    "ShopSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShopSettings",
+      "type": "object",
+      "description": "Represents the shop's operational settings.",
+      "properties": {
+        "openingTime": {
+          "type": "string",
+          "description": "Shop opening time in HH:mm format (e.g., '09:00')."
+        },
+        "closingTime": {
+          "type": "string",
+          "description": "Shop closing time in HH:mm format (e.g., '18:00')."
+        }
+      },
+      "required": [
+        "openingTime",
+        "closingTime"
+      ]
     }
   },
   "auth": {
@@ -374,6 +403,22 @@
             {
               "name": "expenseId",
               "description": "The unique ID of the expense."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/shopSettings/{settingsId}",
+        "definition": {
+          "entityName": "ShopSettings",
+          "schema": {
+            "$ref": "#/backend/entities/ShopSettings"
+          },
+          "description": "Stores global shop settings. Should contain a single document for configuration (e.g., 'config').",
+          "params": [
+            {
+              "name": "settingsId",
+              "description": "The unique ID for the settings document."
             }
           ]
         }

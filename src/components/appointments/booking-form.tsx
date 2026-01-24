@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -16,15 +17,15 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star, Check, Loader2, Search, Plus, Minus } from 'lucide-react';
+import { CalendarIcon, Scissors, Star, Check, Loader2, Search, Plus, Minus, Wallet } from 'lucide-react';
 import { format, addMinutes, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
-import type { Service, Barber, AppUser, Appointment } from '@/types';
+import type { Service, Barber, AppUser, Appointment, ShopSettings } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '../ui/card';
-import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
-import { collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { Card, CardContent, CardFooter } from '../ui/card';
+import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
+import { collection, serverTimestamp, query, where, getDocs, doc } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
 import { useAuth } from '../auth-provider';
 import { Skeleton } from '../ui/skeleton';
@@ -39,6 +40,7 @@ const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
   }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string({ required_error: 'Please select a time.' }),
+  paymentMethod: z.enum(['cash', 'online'], { required_error: 'Please select a payment method.' }),
   barberId: z.string().optional(),
   notes: z.string().optional(),
   customerType: z.enum(['registered', 'walk-in']).default('registered'),
@@ -63,14 +65,17 @@ const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
     }
 });
 
-// 9am to 6pm in 30 minute intervals
-const allTimeSlots = Array.from({ length: 18 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 9;
-  const minute = i % 2 === 0 ? '00' : '30';
-  const period = hour < 12 ? 'AM' : 'PM';
-  const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-  return `${displayHour}:${minute} ${period}`;
-});
+const generateTimeSlots = (openingTime = "09:00", closingTime = "18:00") => {
+    const slots = [];
+    const [startHour] = openingTime.split(':').map(Number);
+    const [endHour] = closingTime.split(':').map(Number);
+
+    for (let i = startHour; i < endHour; i++) {
+        slots.push(`${i > 12 ? i - 12 : i === 0 ? 12 : i}:00 ${i < 12 || i === 24 ? 'AM' : 'PM'}`);
+        slots.push(`${i > 12 ? i - 12 : i === 0 ? 12 : i}:30 ${i < 12 || i === 24 ? 'AM' : 'PM'}`);
+    }
+    return slots;
+}
 
 interface BookingFormProps {
   showPackagesOnly?: boolean;
@@ -100,12 +105,16 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const barbersCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, 'barbers') : null, [firestore]);
   const { data: barbersData, isLoading: barbersLoading } = useCollection<Barber>(barbersCollectionRef);
 
+  const shopSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'shopSettings', 'config') : null, [firestore]);
+  const { data: shopSettings, isLoading: shopSettingsLoading } = useDoc<ShopSettings>(shopSettingsRef);
+
   const formSchema = bookingFormSchema(isAdminOrStaff);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       services: {},
+      paymentMethod: 'cash',
       notes: '',
       barberId: 'any',
       customerType: 'registered',
@@ -117,6 +126,11 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const watchedDate = form.watch('date');
   const watchedServices = form.watch('services');
   const watchedCustomerType = form.watch('customerType');
+
+  const allTimeSlots = useMemo(() => {
+    if (shopSettingsLoading) return [];
+    return generateTimeSlots(shopSettings?.openingTime, shopSettings?.closingTime);
+  }, [shopSettings, shopSettingsLoading]);
 
   useEffect(() => {
     if (!watchedDate || !firestore) return;
@@ -166,8 +180,15 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         .reduce((total, s) => total + (s.duration * (watchedServices[s.id] || 1)), 0);
   }, [watchedServices, allServices]);
 
+  const totalPrice = useMemo(() => {
+    if (!watchedServices || Object.keys(watchedServices).length === 0) return 0;
+    return allServices
+        .filter(s => watchedServices[s.id])
+        .reduce((total, s) => total + (s.price * (watchedServices[s.id] || 1)), 0);
+  }, [watchedServices, allServices]);
+
   const availableTimeSlots = useMemo(() => {
-    if (!watchedDate) return [];
+    if (!watchedDate || allTimeSlots.length === 0) return [];
 
     if (!totalDuration) return allTimeSlots;
 
@@ -182,7 +203,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     }).filter(Boolean) as { start: Date, end: Date }[];
     
     const dateStr = format(watchedDate, 'PPP');
-    const shopCloseTime = parse(`${dateStr} 6:00 PM`, 'PPP h:mm a', new Date());
+    
+    const [closingHour, closingMinute] = (shopSettings?.closingTime || "18:00").split(':').map(Number);
+    const shopCloseTime = parse(`${dateStr} ${closingHour}:${closingMinute}`, 'PPP H:mm', new Date());
 
     return allTimeSlots.filter(slot => {
         try {
@@ -201,7 +224,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           return false;
         }
     });
-  }, [dailyBookings, totalDuration, watchedDate]);
+  }, [dailyBookings, totalDuration, watchedDate, allTimeSlots, shopSettings]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     playSound('click');
@@ -268,6 +291,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       barberId: values.barberId === 'any' ? null : values.barberId,
       notes: values.notes || '',
       status: appointmentStatus,
+      paymentMethod: values.paymentMethod,
       paymentStatus: 'unpaid',
       createdAt: serverTimestamp(),
       bookedBy: isAdminOrStaff ? (user?.name || user?.email) : undefined,
@@ -281,7 +305,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                 description: toastDescription,
             });
             form.reset({ 
-                services: {}, 
+                services: {},
+                paymentMethod: 'cash', 
                 notes: '', 
                 barberId: 'any',
                 customerType: 'registered',
@@ -518,12 +543,14 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Time</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value} disabled={areSlotsLoading || !watchedDate || availableTimeSlots.length === 0}>
+                <Select onValueChange={field.onChange} value={field.value} disabled={areSlotsLoading || !watchedDate || allTimeSlots.length === 0}>
                   <FormControl>
                     <SelectTrigger>
                       {areSlotsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       <SelectValue placeholder={
-                        !watchedDate 
+                        shopSettingsLoading 
+                          ? "Loading shop hours..."
+                          : !watchedDate 
                           ? "Select a date first" 
                           : areSlotsLoading 
                           ? "Loading slots..." 
@@ -540,7 +567,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                       ))
                     ) : (
                       <SelectItem value="no-slots" disabled>
-                        No available slots for this day.
+                        {allTimeSlots.length > 0 ? 'No available slots for this day.' : 'Shop is closed on this day.'}
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -591,6 +618,61 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             </FormItem>
           )}
         />
+        
+        <FormField
+            control={form.control}
+            name="paymentMethod"
+            render={({ field }) => (
+                <FormItem className="space-y-3">
+                    <FormLabel>Payment Method</FormLabel>
+                    <FormDescription>
+                        Select how you'd like to pay for your appointment.
+                    </FormDescription>
+                    <FormControl>
+                        <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-2 gap-4"
+                        >
+                        <FormItem>
+                           <Label className="has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            <FormControl>
+                                <RadioGroupItem value="cash" className="sr-only" />
+                            </FormControl>
+                            <span className="text-lg font-medium">Pay with Cash</span>
+                            <span className="text-xs text-muted-foreground">Pay in person at the shop.</span>
+                           </Label>
+                        </FormItem>
+                        <FormItem>
+                            <Label className="has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            <FormControl>
+                                <RadioGroupItem value="online" className="sr-only"/>
+                            </FormControl>
+                            <span className="text-lg font-medium">Pay Online</span>
+                            <span className="text-xs text-muted-foreground">Pay now with card (coming soon).</span>
+                           </Label>
+                        </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+        
+        {totalPrice > 0 && (
+            <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="p-6 flex flex-row items-center justify-between space-y-0">
+                    <div className="grid gap-1.5">
+                        <h3 className="font-semibold tracking-tight">Total Amount</h3>
+                        <p className="text-sm text-muted-foreground">Final price for all selected services.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <Wallet className="h-6 w-6 text-muted-foreground" />
+                         <div className="text-2xl font-bold">PKR {totalPrice.toLocaleString()}</div>
+                    </div>
+                </div>
+            </div>
+        )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
           {isSubmitting ? 'Submitting Request...' : 'Book Appointment'}

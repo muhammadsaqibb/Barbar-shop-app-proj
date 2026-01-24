@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo } from 'react';
@@ -102,7 +103,8 @@ export default function AppointmentsTable() {
                 <TableHead>Date</TableHead>
                 <TableHead>Time</TableHead>
                 <TableHead>Duration</TableHead>
-                <TableHead>Payment</TableHead>
+                <TableHead>Payment Method</TableHead>
+                <TableHead>Payment Status</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -120,6 +122,11 @@ export default function AppointmentsTable() {
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{formatTimeRange(apt.time, apt.date, apt.totalDuration)}</TableCell>
                     <TableCell>{apt.totalDuration} min</TableCell>
+                     <TableCell>
+                      <Badge variant="secondary" className="capitalize">
+                        {apt.paymentMethod}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="w-[120px]">
                         <PaymentStatusUpdater appointment={apt} />
                     </TableCell>
