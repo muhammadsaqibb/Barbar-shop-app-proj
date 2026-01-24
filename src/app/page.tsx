@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -331,7 +332,7 @@ function SortableActionCard(props: ActionCardProps & { id: string, isEditMode: b
             style={style}
             {...attributes}
             {...listeners}
-            className={`touch-none ${props.isEditMode ? 'cursor-grab' : ''}`}
+            className={`${props.isEditMode ? 'cursor-grab' : ''}`}
         >
             <Link href={props.href} className="flex h-full" onClick={handleClick} draggable="false">
                 <ActionCard {...props} isDraggable={props.isEditMode} />
