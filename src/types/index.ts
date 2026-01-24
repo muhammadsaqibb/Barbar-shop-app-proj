@@ -23,6 +23,7 @@ export interface Service {
   name:string;
   isPackage: boolean;
   price: number;
+  discountedPrice?: number;
   duration: number; // in minutes
   description?: string;
   enabled: boolean;
@@ -33,6 +34,7 @@ export interface Service {
 export interface Barber {
   id: string;
   name: string;
+  phone?: string;
 }
 
 export interface Appointment {

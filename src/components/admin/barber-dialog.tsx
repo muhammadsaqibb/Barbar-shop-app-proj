@@ -31,6 +31,7 @@ import useSound from '@/hooks/use-sound';
 
 const barberSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  phone: z.string().optional(),
 });
 
 interface BarberDialogProps {
@@ -49,14 +50,15 @@ export function BarberDialog({ isOpen, onOpenChange, barber }: BarberDialogProps
     resolver: zodResolver(barberSchema),
     defaultValues: {
       name: '',
+      phone: '',
     },
   });
 
   useEffect(() => {
     if (barber) {
-      form.reset({ name: barber.name });
+      form.reset({ name: barber.name, phone: barber.phone || '' });
     } else {
-      form.reset({ name: '' });
+      form.reset({ name: '', phone: '' });
     }
   }, [barber, form, isOpen]);
 
@@ -106,7 +108,7 @@ export function BarberDialog({ isOpen, onOpenChange, barber }: BarberDialogProps
         <DialogHeader>
           <DialogTitle>{barber ? 'Edit Barber' : 'Add New Barber'}</DialogTitle>
           <DialogDescription>
-            {barber ? 'Update the name of the barber.' : 'Fill in the name for the new barber.'}
+            {barber ? 'Update the details of the barber.' : 'Fill in the details for the new barber.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -119,6 +121,19 @@ export function BarberDialog({ isOpen, onOpenChange, barber }: BarberDialogProps
                   <FormLabel>Barber Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone Number (Optional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., 03001234567" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

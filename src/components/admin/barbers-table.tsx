@@ -116,6 +116,7 @@ export default function BarbersTable() {
             <TableHeader>
                 <TableRow>
                     <TableHead>Name</TableHead>
+                    <TableHead>Phone</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -124,6 +125,7 @@ export default function BarbersTable() {
                     filteredBarbers.map((barber) => (
                     <TableRow key={barber.id}>
                         <TableCell className="font-medium">{barber.name}</TableCell>
+                        <TableCell>{barber.phone || 'N/A'}</TableCell>
                         <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
                                 <Button variant="ghost" size="icon" onClick={() => handleEdit(barber)}>
@@ -154,7 +156,7 @@ export default function BarbersTable() {
                     ))
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={2} className="text-center h-24">
+                        <TableCell colSpan={3} className="text-center h-24">
                             No barbers found for "{searchTerm}".
                         </TableCell>
                     </TableRow>

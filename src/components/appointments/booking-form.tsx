@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
 import type { Service, Barber, AppUser, Appointment, ShopSettings } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardFooter } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { collection, serverTimestamp, query, where, getDocs, doc } from 'firebase/firestore';
 import { Textarea } from '../ui/textarea';
@@ -115,6 +115,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     resolver: zodResolver(formSchema),
     defaultValues: {
       services: {},
+      date: new Date(),
       paymentMethod: 'cash',
       notes: '',
       barberId: 'any',
@@ -185,7 +186,10 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     if (!watchedServices || Object.keys(watchedServices).length === 0) return 0;
     return allServices
         .filter(s => watchedServices[s.id])
-        .reduce((total, s) => total + (s.price * (watchedServices[s.id] || 1)), 0);
+        .reduce((total, s) => {
+            const priceToUse = s.discountedPrice && s.discountedPrice > 0 ? s.discountedPrice : s.price;
+            return total + (priceToUse * (watchedServices[s.id] || 1));
+        }, 0);
   }, [watchedServices, allServices]);
 
   const availableTimeSlots = useMemo(() => {
@@ -226,6 +230,13 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         }
     });
   }, [dailyBookings, totalDuration, watchedDate, allTimeSlots, shopSettings]);
+  
+  useEffect(() => {
+    if (availableTimeSlots.length > 0 && !form.getValues('time')) {
+        form.setValue('time', availableTimeSlots[0]);
+    }
+  }, [availableTimeSlots, form]);
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     playSound('click');
@@ -273,7 +284,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     const servicesForAppointment = selectedServicesDetails.map(service => ({
         id: service.id,
         name: service.name,
-        price: service.price,
+        price: service.discountedPrice && service.discountedPrice > 0 ? service.discountedPrice : service.price,
         duration: service.duration,
         quantity: values.services[service.id],
     }));
@@ -307,6 +318,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             });
             form.reset({ 
                 services: {},
+                date: new Date(),
                 paymentMethod: 'cash', 
                 notes: '', 
                 barberId: 'any',
@@ -733,7 +745,14 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
                     </div>
                 )}
                 <div className="mt-auto pt-4 text-center">
-                   <p className="text-sm text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
+                    {service.discountedPrice && service.discountedPrice > 0 ? (
+                        <p className="text-sm font-bold">
+                            <span className="line-through text-muted-foreground/80 mr-2">PKR {service.price.toLocaleString()}</span>
+                            PKR {service.discountedPrice.toLocaleString()}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
+                    )}
                 </div>
             </CardContent>
         </Card>

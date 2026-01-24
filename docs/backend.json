@@ -209,6 +209,10 @@
           "type": "number",
           "description": "The price of the service."
         },
+        "discountedPrice": {
+            "type": "number",
+            "description": "The discounted price of the service, if applicable."
+        },
         "duration": {
           "type": "number",
           "description": "The duration of the service in minutes."
@@ -252,6 +256,10 @@
         "name": {
           "type": "string",
           "description": "The name of the barber."
+        },
+        "phone": {
+            "type": "string",
+            "description": "The barber's phone number."
         }
       },
       "required": [

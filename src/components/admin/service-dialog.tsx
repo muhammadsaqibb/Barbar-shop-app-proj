@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from 'react-hook-form';
@@ -35,11 +36,15 @@ const serviceSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   description: z.string().optional(),
   price: z.coerce.number().int().min(0, "Price must be a positive number."),
+  discountedPrice: z.coerce.number().int().min(0).optional(),
   duration: z.coerce.number().int().min(5, "Duration must be at least 5 minutes."),
   isPackage: z.boolean().default(false),
   enabled: z.boolean().default(true),
   quantityEnabled: z.boolean().default(false),
   maxQuantity: z.coerce.number().int().min(1).optional(),
+}).refine(data => !data.discountedPrice || data.discountedPrice < data.price, {
+    message: "Discounted price must be less than the original price.",
+    path: ["discountedPrice"],
 });
 
 interface ServiceDialogProps {
@@ -60,6 +65,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
       name: '',
       description: '',
       price: 0,
+      discountedPrice: undefined,
       duration: 30,
       isPackage: false,
       enabled: true,
@@ -74,6 +80,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
     if (service) {
       form.reset({
         ...service,
+        discountedPrice: service.discountedPrice || undefined,
         maxQuantity: service.maxQuantity || 1,
       });
     } else {
@@ -81,6 +88,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
         name: '',
         description: '',
         price: 0,
+        discountedPrice: undefined,
         duration: 30,
         isPackage: false,
         enabled: true,
@@ -94,10 +102,15 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
     playSound('click');
     setIsSubmitting(true);
     try {
+      const dataToSave = {
+        ...values,
+        discountedPrice: values.discountedPrice || null, // Store null if empty
+      };
+
       if (service) {
         // Update existing service
         const serviceRef = doc(firestore, 'services', service.id);
-        await setDoc(serviceRef, values, { merge: true });
+        await setDoc(serviceRef, dataToSave, { merge: true });
         toast({
           title: 'Service Updated',
           description: `${values.name} has been successfully updated.`,
@@ -105,7 +118,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
       } else {
         // Create new service
         const servicesCollection = collection(firestore, 'services');
-        await addDoc(servicesCollection, values);
+        await addDoc(servicesCollection, dataToSave);
         toast({
           title: 'Service Created',
           description: `${values.name} has been successfully added.`,
@@ -177,18 +190,31 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
                 />
                  <FormField
                 control={form.control}
-                name="duration"
+                name="discountedPrice"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Duration (min)</FormLabel>
+                    <FormLabel>Discounted Price (Optional)</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="30" {...field} />
+                        <Input type="number" placeholder="2200" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
             </div>
+             <FormField
+            control={form.control}
+            name="duration"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Duration (min)</FormLabel>
+                <FormControl>
+                    <Input type="number" placeholder="30" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
             <FormField
               control={form.control}
               name="isPackage"

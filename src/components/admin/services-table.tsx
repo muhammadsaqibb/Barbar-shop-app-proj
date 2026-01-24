@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Service } from '@/types';
@@ -136,7 +137,16 @@ export default function ServicesTable() {
                     filteredServices.map((service) => (
                     <TableRow key={service.id}>
                         <TableCell className="font-medium">{service.name}</TableCell>
-                        <TableCell>PKR {service.price?.toLocaleString()}</TableCell>
+                        <TableCell>
+                            {service.discountedPrice && service.discountedPrice > 0 ? (
+                                <div className="flex flex-col">
+                                    <span className="line-through text-muted-foreground text-xs">PKR {service.price?.toLocaleString()}</span>
+                                    <span className="font-bold">PKR {service.discountedPrice?.toLocaleString()}</span>
+                                </div>
+                            ) : (
+                                `PKR ${service.price?.toLocaleString()}`
+                            )}
+                        </TableCell>
                         <TableCell>{service.duration} min</TableCell>
                         <TableCell>
                             <Badge variant={service.isPackage ? "default" : "secondary"}>
