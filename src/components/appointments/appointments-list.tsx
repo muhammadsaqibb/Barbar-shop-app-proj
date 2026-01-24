@@ -70,7 +70,7 @@ export default function AppointmentsList() {
             <TableBody>
                 {appointments.map((apt) => (
                 <TableRow key={apt.id}>
-                    <TableCell className="font-medium">{apt.services.map(s => s.name).join(', ')}</TableCell>
+                    <TableCell className="font-medium">{apt.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</TableCell>
                     <TableCell>PKR {apt.totalPrice?.toLocaleString()}</TableCell>
                     <TableCell>
                         <Badge variant={apt.paymentStatus === 'paid' ? 'default' : 'secondary'} className="capitalize">

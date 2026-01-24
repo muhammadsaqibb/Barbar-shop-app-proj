@@ -25,6 +25,8 @@ export interface Service {
   duration: number; // in minutes
   description?: string;
   enabled: boolean;
+  quantityEnabled?: boolean;
+  maxQuantity?: number;
 }
 
 export interface Barber {
@@ -36,7 +38,7 @@ export interface Appointment {
   id: string;
   clientId: string;
   clientName: string | null;
-  services: { id: string, name: string, price: number, duration: number }[];
+  services: { id: string, name: string, price: number, duration: number, quantity: number }[];
   totalPrice: number;
   totalDuration: number;
   date: string;

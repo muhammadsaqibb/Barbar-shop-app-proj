@@ -38,6 +38,8 @@ const serviceSchema = z.object({
   duration: z.coerce.number().int().min(5, "Duration must be at least 5 minutes."),
   isPackage: z.boolean().default(false),
   enabled: z.boolean().default(true),
+  quantityEnabled: z.boolean().default(false),
+  maxQuantity: z.coerce.number().int().min(1).optional(),
 });
 
 interface ServiceDialogProps {
@@ -61,12 +63,19 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
       duration: 30,
       isPackage: false,
       enabled: true,
+      quantityEnabled: false,
+      maxQuantity: 1,
     },
   });
 
+  const watchedQuantityEnabled = form.watch('quantityEnabled');
+
   useEffect(() => {
     if (service) {
-      form.reset(service);
+      form.reset({
+        ...service,
+        maxQuantity: service.maxQuantity || 1,
+      });
     } else {
       form.reset({
         name: '',
@@ -75,6 +84,8 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
         duration: 30,
         isPackage: false,
         enabled: true,
+        quantityEnabled: false,
+        maxQuantity: 1,
       });
     }
   }, [service, form, isOpen]);
@@ -115,7 +126,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{service ? 'Edit Service' : 'Add New Service'}</DialogTitle>
           <DialogDescription>
@@ -123,7 +134,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
             <FormField
               control={form.control}
               name="name"
@@ -198,7 +209,45 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
                 </FormItem>
               )}
             />
-            <DialogFooter>
+             <FormField
+              control={form.control}
+              name="quantityEnabled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Enable Quantity Selection</FormLabel>
+                    <FormDescription>
+                      Allow clients to book for more than one person.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            {watchedQuantityEnabled && (
+                <FormField
+                control={form.control}
+                name="maxQuantity"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Max Quantity (Pax)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="e.g., 5" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      Maximum number of people for this service.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? 'Saving...' : 'Save Service'}

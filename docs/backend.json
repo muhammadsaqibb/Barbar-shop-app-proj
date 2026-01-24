@@ -91,6 +91,10 @@
               },
               "duration": {
                 "type": "number"
+              },
+              "quantity": {
+                "type": "number",
+                "description": "Number of times the service is booked."
               }
             },
             "required": [
@@ -207,6 +211,14 @@
         "enabled": {
           "type": "boolean",
           "description": "Whether the service is available for booking."
+        },
+        "quantityEnabled": {
+          "type": "boolean",
+          "description": "Whether quantity selection is enabled for this service."
+        },
+        "maxQuantity": {
+          "type": "number",
+          "description": "Maximum quantity that can be booked for this service."
         }
       },
       "required": [

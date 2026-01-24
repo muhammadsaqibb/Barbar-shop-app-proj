@@ -115,7 +115,7 @@ export default function AppointmentsTable() {
                         {apt.clientId === 'walk-in' && <Badge variant="secondary" className="ml-2">Walk-In</Badge>}
                     </TableCell>
                     <TableCell>{apt.bookedBy || <Badge variant="outline">Online</Badge>}</TableCell>
-                    <TableCell className="font-medium max-w-xs truncate">{apt.services.map(s => s.name).join(', ')}</TableCell>
+                    <TableCell className="font-medium max-w-xs truncate">{apt.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</TableCell>
                     <TableCell>PKR {apt.totalPrice?.toLocaleString()}</TableCell>
                     <TableCell>{apt.date}</TableCell>
                     <TableCell>{formatTimeRange(apt.time, apt.date, apt.totalDuration)}</TableCell>

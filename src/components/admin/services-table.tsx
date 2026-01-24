@@ -8,7 +8,7 @@ import { useCollection, useFirebase, useMemoFirebase, updateDocumentNonBlocking 
 import { collection, query, orderBy, doc, deleteDoc } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Button } from '../ui/button';
-import { Edit, PlusCircle, Trash, Search } from 'lucide-react';
+import { Edit, PlusCircle, Trash, Search, Users } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { ServiceDialog } from './service-dialog';
 import {
@@ -126,6 +126,7 @@ export default function ServicesTable() {
                     <TableHead>Price</TableHead>
                     <TableHead>Duration</TableHead>
                     <TableHead>Type</TableHead>
+                    <TableHead>Quantity (Pax)</TableHead>
                     <TableHead>Enabled</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -141,6 +142,16 @@ export default function ServicesTable() {
                             <Badge variant={service.isPackage ? "default" : "secondary"}>
                                 {service.isPackage ? "Package" : "Service"}
                             </Badge>
+                        </TableCell>
+                        <TableCell>
+                            {service.quantityEnabled ? (
+                                <Badge variant="secondary" className="flex items-center gap-1.5">
+                                    <Users className="h-3 w-3" />
+                                    <span>Enabled (Max {service.maxQuantity || 'N/A'})</span>
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline">Disabled</Badge>
+                            )}
                         </TableCell>
                         <TableCell>
                             <Switch
@@ -179,7 +190,7 @@ export default function ServicesTable() {
                     ))
                 ) : (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24">
+                        <TableCell colSpan={7} className="text-center h-24">
                             No services found for "{searchTerm}".
                         </TableCell>
                     </TableRow>

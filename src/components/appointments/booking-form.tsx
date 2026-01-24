@@ -16,7 +16,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star, Check, Loader2, Search } from 'lucide-react';
+import { CalendarIcon, Scissors, Star, Check, Loader2, Search, Plus, Minus } from 'lucide-react';
 import { format, addMinutes, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
@@ -34,8 +34,8 @@ import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
-  services: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'You have to select at least one service.',
+  services: z.record(z.string(), z.number().min(1)).refine((obj) => Object.keys(obj).length > 0, {
+      message: 'You have to select at least one service.',
   }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string({ required_error: 'Please select a time.' }),
@@ -105,7 +105,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      services: [],
+      services: {},
       notes: '',
       barberId: 'any',
       customerType: 'registered',
@@ -159,11 +159,15 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
       );
   }, [itemsToDisplay, searchTerm]);
 
+  const totalDuration = useMemo(() => {
+    if (!watchedServices || Object.keys(watchedServices).length === 0) return 0;
+    return allServices
+        .filter(s => watchedServices[s.id])
+        .reduce((total, s) => total + (s.duration * (watchedServices[s.id] || 1)), 0);
+  }, [watchedServices, allServices]);
+
   const availableTimeSlots = useMemo(() => {
     if (!watchedDate) return [];
-
-    const selectedServices = allServices.filter(s => watchedServices.includes(s.id));
-    const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
 
     if (!totalDuration) return allTimeSlots;
 
@@ -197,7 +201,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           return false;
         }
     });
-  }, [dailyBookings, watchedServices, watchedDate, allServices]);
+  }, [dailyBookings, totalDuration, watchedDate]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     playSound('click');
@@ -241,16 +245,24 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         return;
     }
 
-    const selectedServices = allServices.filter(s => values.services.includes(s.id));
-    const totalPrice = selectedServices.reduce((total, s) => total + s.price, 0);
-    const totalDuration = selectedServices.reduce((total, s) => total + s.duration, 0);
+    const selectedServicesDetails = allServices.filter(s => values.services[s.id]);
+    const servicesForAppointment = selectedServicesDetails.map(service => ({
+        id: service.id,
+        name: service.name,
+        price: service.price,
+        duration: service.duration,
+        quantity: values.services[service.id],
+    }));
+
+    const finalTotalPrice = servicesForAppointment.reduce((total, s) => total + (s.price * s.quantity), 0);
+    const finalTotalDuration = servicesForAppointment.reduce((total, s) => total + (s.duration * s.quantity), 0);
     
     const appointmentData = {
       clientId: bookingClientId,
       clientName: bookingClientName,
-      services: selectedServices.map(s => ({ id: s.id, name: s.name, price: s.price, duration: s.duration })),
-      totalPrice,
-      totalDuration,
+      services: servicesForAppointment,
+      totalPrice: finalTotalPrice,
+      totalDuration: finalTotalDuration,
       date: format(values.date, 'PPP'),
       time: values.time,
       barberId: values.barberId === 'any' ? null : values.barberId,
@@ -269,7 +281,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                 description: toastDescription,
             });
             form.reset({ 
-                services: [], 
+                services: {}, 
                 notes: '', 
                 barberId: 'any',
                 customerType: 'registered',
@@ -401,23 +413,51 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                     filteredItemsToDisplay.length > 0 ? (
                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {filteredItemsToDisplay.map((item) => {
-                                const isSelected = field.value?.includes(item.id);
+                                const quantity = field.value?.[item.id] || 0;
+                                const isSelected = quantity > 0;
+                                
+                                const handleSelect = () => {
+                                    let newServices = { ...field.value };
+                                    if (showPackagesOnly) {
+                                        newServices = {}; 
+                                        if (!isSelected) {
+                                            newServices[item.id] = 1;
+                                        }
+                                    } else {
+                                        if (isSelected) {
+                                            delete newServices[item.id];
+                                        } else {
+                                            newServices[item.id] = 1;
+                                        }
+                                    }
+                                    field.onChange(newServices);
+                                };
+
+                                const handleQuantityChange = (newQuantity: number) => {
+                                    const maxQuantity = item.maxQuantity || 10;
+                                    if (newQuantity > maxQuantity) {
+                                        toast({ variant: 'destructive', title: `You can only book for ${maxQuantity} people at most.`});
+                                        return;
+                                    };
+                                    
+                                    const newServices = { ...field.value };
+                                    if (newQuantity > 0) {
+                                        newServices[item.id] = newQuantity;
+                                    } else {
+                                        delete newServices[item.id];
+                                    }
+                                    field.onChange(newServices);
+                                };
+
                                 return (
                                     <ServiceCard
-                                    key={item.id}
-                                    service={item}
-                                    isSelected={isSelected}
-                                    onSelect={() => {
-                                        let newValue;
-                                        if (showPackagesOnly) {
-                                        newValue = isSelected ? [] : [item.id];
-                                        } else {
-                                        newValue = isSelected
-                                            ? field.value?.filter((id) => id !== item.id)
-                                            : [...(field.value || []), item.id];
-                                        }
-                                        field.onChange(newValue);
-                                    }}
+                                        key={item.id}
+                                        service={item}
+                                        isSelected={isSelected}
+                                        onSelect={handleSelect}
+                                        quantity={quantity}
+                                        onQuantityChange={handleQuantityChange}
+                                        showPackagesOnly={showPackagesOnly}
                                     />
                                 );
                             })}
@@ -564,9 +604,17 @@ interface ServiceCardProps {
     service: Service;
     isSelected: boolean;
     onSelect: () => void;
+    quantity: number;
+    onQuantityChange: (newQuantity: number) => void;
+    showPackagesOnly: boolean;
 }
 
-function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
+function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange, showPackagesOnly }: ServiceCardProps) {
+    const handleQuantityClick = (e: React.MouseEvent, newQuantity: number) => {
+        e.stopPropagation();
+        onQuantityChange(newQuantity);
+    }
+    
     return (
         <Card 
             className={cn(
@@ -590,7 +638,18 @@ function ServiceCard({ service, isSelected, onSelect }: ServiceCardProps) {
                         <p className="text-xs text-muted-foreground">{service.description}</p>
                     )}
                 </div>
-                <div className="mt-auto pt-2 text-center">
+                 {isSelected && (service.quantityEnabled || showPackagesOnly === false) && !service.isPackage && (
+                    <div className="flex items-center justify-center gap-2 mt-4">
+                        <Button size="icon" variant="outline" className="h-6 w-6" onClick={(e) => handleQuantityClick(e, quantity - 1)}>
+                            <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-bold w-4 text-center">{quantity}</span>
+                        <Button size="icon" variant="outline" className="h-6 w-6" onClick={(e) => handleQuantityClick(e, quantity + 1)}>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+                <div className="mt-auto pt-4 text-center">
                    <p className="text-sm text-muted-foreground font-bold">PKR {service.price.toLocaleString()}</p>
                 </div>
             </CardContent>
