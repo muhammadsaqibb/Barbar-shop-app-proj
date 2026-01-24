@@ -62,15 +62,11 @@ const MobileServiceCard = ({ service, onToggle, onEdit, onDelete }: { service: S
                 <span>{service.duration} min</span>
             </div>
             <div className="flex justify-between">
-                <span className="text-muted-foreground">Quantity (Pax):</span>
-                {service.quantityEnabled ? (
-                    <Badge variant="secondary" className="flex items-center gap-1.5">
-                        <Users className="h-3 w-3" />
-                        <span>Enabled (Max {service.maxQuantity || 'N/A'})</span>
-                    </Badge>
-                ) : (
-                    <Badge variant="outline">Disabled</Badge>
-                )}
+                <span className="text-muted-foreground">Max Pax:</span>
+                 <Badge variant="secondary" className="flex items-center gap-1.5">
+                    <Users className="h-3 w-3" />
+                    <span>Up to {service.maxQuantity || 50}</span>
+                </Badge>
             </div>
         </CardContent>
         <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
@@ -218,7 +214,7 @@ export default function ServicesTable() {
                     <TableHead>Price</TableHead>
                     <TableHead>Duration</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Quantity (Pax)</TableHead>
+                    <TableHead>Max Pax</TableHead>
                     <TableHead>Enabled</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -245,14 +241,10 @@ export default function ServicesTable() {
                             </Badge>
                         </TableCell>
                         <TableCell>
-                            {service.quantityEnabled ? (
-                                <Badge variant="secondary" className="flex items-center gap-1.5">
-                                    <Users className="h-3 w-3" />
-                                    <span>Enabled (Max {service.maxQuantity || 'N/A'})</span>
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline">Disabled</Badge>
-                            )}
+                           <Badge variant="secondary" className="flex items-center gap-1.5">
+                                <Users className="h-3 w-3" />
+                                <span>Up to {service.maxQuantity || 50}</span>
+                            </Badge>
                         </TableCell>
                         <TableCell>
                             <Switch

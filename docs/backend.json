@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -231,10 +232,6 @@
         "enabled": {
           "type": "boolean",
           "description": "Whether the service is available for booking."
-        },
-        "quantityEnabled": {
-          "type": "boolean",
-          "description": "Whether quantity selection is enabled for this service."
         },
         "maxQuantity": {
           "type": "number",

@@ -40,7 +40,6 @@ const serviceSchema = z.object({
   duration: z.coerce.number().int().min(5, "Duration must be at least 5 minutes."),
   isPackage: z.boolean().default(false),
   enabled: z.boolean().default(true),
-  quantityEnabled: z.boolean().default(false),
   maxQuantity: z.coerce.number().int().min(1).optional(),
 }).refine(data => !data.discountedPrice || data.discountedPrice < data.price, {
     message: "Discounted price must be less than the original price.",
@@ -69,19 +68,16 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
       duration: 30,
       isPackage: false,
       enabled: true,
-      quantityEnabled: false,
-      maxQuantity: 1,
+      maxQuantity: 50,
     },
   });
-
-  const watchedQuantityEnabled = form.watch('quantityEnabled');
 
   useEffect(() => {
     if (service) {
       form.reset({
         ...service,
         discountedPrice: service.discountedPrice || undefined,
-        maxQuantity: service.maxQuantity || 1,
+        maxQuantity: service.maxQuantity || 50,
       });
     } else {
       form.reset({
@@ -92,8 +88,7 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
         duration: 30,
         isPackage: false,
         enabled: true,
-        quantityEnabled: false,
-        maxQuantity: 1,
+        maxQuantity: 50,
       });
     }
   }, [service, form, isOpen]);
@@ -215,6 +210,22 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
                 </FormItem>
             )}
             />
+             <FormField
+                control={form.control}
+                name="maxQuantity"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Max Quantity (Pax)</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="e.g., 5" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      Maximum number of people for this service.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             <FormField
               control={form.control}
               name="isPackage"
@@ -235,44 +246,6 @@ export function ServiceDialog({ isOpen, onOpenChange, service }: ServiceDialogPr
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="quantityEnabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Enable Quantity Selection</FormLabel>
-                    <FormDescription>
-                      Allow clients to book for more than one person.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            {watchedQuantityEnabled && (
-                <FormField
-                control={form.control}
-                name="maxQuantity"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Max Quantity (Pax)</FormLabel>
-                    <FormControl>
-                        <Input type="number" placeholder="e.g., 5" {...field} />
-                    </FormControl>
-                     <FormDescription>
-                      Maximum number of people for this service.
-                    </FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            )}
             <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button type="submit" disabled={isSubmitting}>

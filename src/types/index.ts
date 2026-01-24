@@ -28,7 +28,6 @@ export interface Service {
   duration: number; // in minutes
   description?: string;
   enabled: boolean;
-  quantityEnabled?: boolean;
   maxQuantity?: number;
 }
 
@@ -53,7 +52,7 @@ export interface Appointment {
   paymentMethod: 'cash' | 'online';
   paymentStatus: 'paid' | 'unpaid';
   createdAt: any;
-  bookedBy?: string;
+  bookedBy?: string | null;
 }
 
 export interface Expense {

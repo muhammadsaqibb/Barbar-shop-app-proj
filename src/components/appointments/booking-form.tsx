@@ -347,7 +347,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {isAdminOrStaff && (
-            <div className='space-y-8 rounded-lg border p-4'>
+          <div className='space-y-8 rounded-lg border p-4'>
                 <FormField
                     control={form.control}
                     name="customerType"
@@ -470,16 +470,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                                                     newServices[item.id] = 1;
                                                 }
                                             } else {
-                                                if (item.quantityEnabled) {
-                                                    if (!isSelected) {
-                                                        newServices[item.id] = 1;
-                                                    }
-                                                } else {
-                                                    if (isSelected) {
-                                                        delete newServices[item.id];
-                                                    } else {
-                                                        newServices[item.id] = 1;
-                                                    }
+                                                if (!isSelected) {
+                                                    newServices[item.id] = 1;
                                                 }
                                             }
                                             field.onChange(newServices);
@@ -738,7 +730,7 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
                         <p className="text-xs text-muted-foreground">{service.description}</p>
                     )}
                 </div>
-                 {isSelected && service.quantityEnabled && (
+                 {isSelected && !showPackagesOnly && (
                     <div className="flex items-center justify-center gap-2 mt-4">
                         <Button size="icon" variant="outline" className="h-6 w-6" onClick={(e) => handleQuantityClick(e, quantity - 1)}>
                             <Minus className="h-4 w-4" />
@@ -763,5 +755,3 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
-
-    
