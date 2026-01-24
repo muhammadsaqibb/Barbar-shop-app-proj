@@ -475,9 +475,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                                 };
 
                                 const handleQuantityChange = (newQuantity: number) => {
-                                    const maxQuantity = item.maxQuantity || 10;
+                                    const maxQuantity = item.maxQuantity || 50;
                                     if (newQuantity > maxQuantity) {
-                                        toast({ variant: 'destructive', title: `You can only book for ${maxQuantity} people at most.`});
+                                        toast({ variant: 'destructive', title: `You can only book for ${maxQuantity} ${maxQuantity === 1 ? 'person' : 'people'} at most.`});
                                         return;
                                     };
                                     
@@ -761,5 +761,7 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
+
+    
 
     
