@@ -687,7 +687,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                          <div className="text-2xl font-bold">PKR {totalPrice.toLocaleString()}</div>
                     </div>
                 </div>
-            )}
+            </div>
+        )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
           {isSubmitting ? t('submitting_request') : t('book_appointment_button')}
@@ -760,7 +761,3 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
-
-    
-
-    
