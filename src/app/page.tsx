@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -14,28 +13,25 @@ import {
 import { useTranslation } from "@/context/language-provider";
 import type { AppUser } from "@/types";
 import type { Translations } from "@/context/language-provider";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import {
     DndContext,
     closestCenter,
-    KeyboardSensor,
     PointerSensor,
     useSensor,
     useSensors,
+    DragStartEvent,
     DragEndEvent,
 } from '@dnd-kit/core';
 import {
     arrayMove,
     SortableContext,
-    sortableKeyboardCoordinates,
     useSortable,
     rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useRouter } from "next/navigation";
-
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -162,40 +158,32 @@ export default function Home() {
   const { toast } = useToast();
   
   const [cardLayout, setCardLayout] = useState<ActionCardData[]>([]);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
         activationConstraint: {
-            delay: 250,
-            tolerance: 5,
+            delay: 500,
+            tolerance: 10,
         },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
     })
   );
 
   const displayName = formatUserDisplayName(user?.name, user?.email);
-
   const visibleCards = useMemo(() => ALL_ACTION_CARDS.filter(card => card.isVisible(user)), [user]);
 
   useEffect(() => {
     const savedOrder = user?.homepageLayout;
-    
     let sortedCards = [...visibleCards];
-
     if (savedOrder) {
       const cardMap = new Map(visibleCards.map(c => [c.id, c]));
       const orderedVisibleCards = savedOrder
         .map(id => cardMap.get(id))
         .filter((c): c is ActionCardData => !!c);
-      
       const orderedVisibleIds = new Set(orderedVisibleCards.map(c => c.id));
       const newCards = visibleCards.filter(c => !orderedVisibleIds.has(c.id));
-      
       sortedCards = [...orderedVisibleCards, ...newCards];
     }
-
     setCardLayout(sortedCards);
   }, [user, visibleCards]);
 
@@ -215,10 +203,15 @@ export default function Home() {
      try {
       await updateDoc(userRef, { homepageLayout: deleteField() });
       setCardLayout(visibleCards);
+      setIsEditMode(false);
       toast({ title: "Layout Reset", description: "Your homepage layout has been reset to default." });
     } catch (error) {
       toast({ variant: "destructive", title: "Reset Failed", description: "Could not reset your layout." });
     }
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setIsEditMode(true);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -228,10 +221,8 @@ export default function Home() {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
         const newLayout = arrayMove(items, oldIndex, newIndex);
-        
         const newOrder = newLayout.map(card => card.id);
         handleSaveLayout(newOrder);
-
         return newLayout;
       });
     }
@@ -269,14 +260,23 @@ export default function Home() {
         {user && (
             <div className="flex justify-center mb-8 gap-4">
                 <Button variant="outline" onClick={handleResetLayout}><RotateCcw className="mr-2 h-4 w-4" /> Reset Layout</Button>
+                {isEditMode && <Button onClick={() => setIsEditMode(false)}>Done</Button>}
             </div>
+        )}
+        
+        {isEditMode && (
+          <div className="text-center mb-4 p-2 rounded-md bg-accent text-accent-foreground font-semibold animate-pulse">
+            Reorder Mode
+          </div>
         )}
 
         {user ? (
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onDragCancel={() => setIsEditMode(false)}
             >
                 <SortableContext items={cardIds} strategy={rectSortingStrategy}>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
@@ -284,6 +284,7 @@ export default function Home() {
                             <SortableActionCard 
                                 key={card.id} 
                                 id={card.id}
+                                isEditMode={isEditMode}
                                 href={card.href}
                                 icon={card.icon}
                                 title={t(card.titleKey)}
@@ -299,7 +300,6 @@ export default function Home() {
   );
 }
 
-
 interface ActionCardProps {
   href: string;
   icon: React.ReactNode;
@@ -308,63 +308,41 @@ interface ActionCardProps {
   disabled?: boolean;
 }
 
-function SortableActionCard(props: ActionCardProps & { id: string }) {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id: props.id });
-
-    // This ref tracks if a drag event has occurred during the current interaction.
-    const hasDragged = useRef(false);
-
-    useEffect(() => {
-        if (isDragging) {
-            hasDragged.current = true;
-        }
-    }, [isDragging]);
+function SortableActionCard(props: ActionCardProps & { id: string, isEditMode: boolean }) {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: props.id,
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         zIndex: isDragging ? 10 : 'auto',
-        opacity: isDragging ? 0.8 : 1,
     };
 
     const handleClick = (e: React.MouseEvent) => {
-        // When a click event fires, check if a drag has just happened.
-        if (hasDragged.current) {
-            // If yes, prevent the link from navigating.
+        if (props.isEditMode) {
             e.preventDefault();
         }
     };
-    
-    // This handler resets the drag flag at the beginning of any pointer interaction.
-    const handlePointerDown = () => {
-        hasDragged.current = false;
-    }
 
     return (
-        <div 
-            ref={setNodeRef} 
-            style={style} 
-            {...attributes} 
-            {...listeners} 
-            onPointerDown={handlePointerDown}
-            className="touch-none cursor-grab"
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className={`touch-none ${props.isEditMode ? 'cursor-grab' : ''}`}
         >
-            <ActionCard {...props} onClick={handleClick} isDraggable />
+            <Link href={props.href} className="flex h-full" onClick={handleClick} draggable="false">
+                <ActionCard {...props} isDraggable={props.isEditMode} />
+            </Link>
         </div>
     );
 }
 
-
-function ActionCard({ href, icon, title, description, disabled, onClick, isDraggable }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void; isDraggable?: boolean; }) {
+function ActionCard({ href, icon, title, description, disabled, isDraggable }: ActionCardProps & { isDraggable?: boolean; }) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${!isDraggable && 'hover:animate-shake'}`}>
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card'} ${isDraggable ? 'ring-2 ring-primary ring-offset-2 animate-shake' : ''} ${!isDraggable && !disabled ? 'hover:animate-shake' : ''}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
@@ -385,10 +363,6 @@ function ActionCard({ href, icon, title, description, disabled, onClick, isDragg
   if (disabled) {
     return <div className={`h-full cursor-not-allowed`}>{content}</div>
   }
-
-  return (
-    <Link href={href} className="flex h-full" onClick={onClick}>
-        {content}
-    </Link>
-  );
+  
+  return content;
 }
