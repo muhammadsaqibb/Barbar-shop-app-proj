@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export default function AppointmentActions({ appointmentId, currentStatus, onSta
     };
 
     return (
-        <div className="flex justify-end gap-2">
+        <div className="flex w-full justify-end gap-2 flex-wrap">
             {currentStatus === 'pending' && (
                 <>
                     <Button 

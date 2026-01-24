@@ -39,31 +39,32 @@ const MobileAppointmentCard = ({ appointment, onStatusChange }: { appointment: A
     return (
         <Card>
             <CardHeader>
-                <div className="flex justify-between items-start">
-                    <div>
-                        <CardTitle className="text-lg">{appointment.clientName}</CardTitle>
-                        <CardDescription>
-                            {appointment.clientId === 'walk-in' && <Badge variant="secondary" className="mr-2">Walk-In</Badge>}
-                             Booked By: {appointment.bookedBy || <Badge variant="outline">Online</Badge>}
+                <div className="flex justify-between items-start gap-2">
+                    <div className='flex-1'>
+                        <CardTitle className="text-lg break-words">{appointment.clientName}</CardTitle>
+                        <CardDescription className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1 text-xs">
+                           {appointment.clientId === 'walk-in' && <Badge variant="secondary">Walk-In</Badge>}
+                            <span>Booked By:</span>
+                            <Badge variant={appointment.bookedBy ? "secondary" : "outline"}>{appointment.bookedBy || 'Online'}</Badge>
                         </CardDescription>
                     </div>
-                    <Badge variant={getStatusVariant(appointment.status)} className="capitalize">{appointment.status}</Badge>
+                    <Badge variant={getStatusVariant(appointment.status)} className="capitalize shrink-0">{appointment.status}</Badge>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-4 text-sm">
-                <div className="flex justify-between">
+            <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Date:</span>
-                    <span>{appointment.date}</span>
+                    <span className="font-medium">{appointment.date}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Time:</span>
-                    <span>{formatTimeRange(appointment.time, appointment.date, appointment.totalDuration)}</span>
+                    <span className="font-medium">{formatTimeRange(appointment.time, appointment.date, appointment.totalDuration)}</span>
                 </div>
-                <div className="flex justify-between items-start">
-                    <span className="text-muted-foreground shrink-0 mr-2">Services:</span>
-                    <span className="text-right max-w-[70%] truncate">{appointment.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</span>
+                <div className="flex justify-between items-start gap-4">
+                    <span className="text-muted-foreground shrink-0">Services:</span>
+                    <span className="font-medium text-right">{appointment.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</span>
                 </div>
-                 <div className="flex justify-between">
+                 <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Total:</span>
                     <span className="font-bold">PKR {appointment.totalPrice?.toLocaleString()} ({appointment.totalDuration} min)</span>
                 </div>
@@ -77,7 +78,7 @@ const MobileAppointmentCard = ({ appointment, onStatusChange }: { appointment: A
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="bg-muted/50 p-4 flex justify-end">
+            <CardFooter className="bg-muted/50 p-2">
                 <AppointmentActions appointmentId={appointment.id} currentStatus={appointment.status} onStatusChange={onStatusChange} />
             </CardFooter>
         </Card>
