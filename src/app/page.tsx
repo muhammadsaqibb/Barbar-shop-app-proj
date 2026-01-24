@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -355,15 +356,15 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
             onPointerDown={handlePointerDown}
             className="touch-none cursor-grab"
         >
-            <ActionCard {...props} onClick={handleClick} />
+            <ActionCard {...props} onClick={handleClick} isDraggable />
         </div>
     );
 }
 
 
-function ActionCard({ href, icon, title, description, disabled, onClick }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void }) {
+function ActionCard({ href, icon, title, description, disabled, onClick, isDraggable }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void; isDraggable?: boolean; }) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} hover:animate-shake`}>
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${!isDraggable && 'hover:animate-shake'}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
