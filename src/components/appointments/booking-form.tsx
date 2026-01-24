@@ -457,47 +457,49 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                                 const quantity = field.value?.[item.id] || 0;
                                 const isSelected = quantity > 0;
                                 
-                                const handleSelect = () => {
-                                    let newServices = { ...field.value };
-                                    if (showPackagesOnly) {
-                                        newServices = {}; 
-                                        if (!isSelected) {
-                                            newServices[item.id] = 1;
-                                        }
-                                    } else {
-                                        if (isSelected) {
-                                            delete newServices[item.id];
-                                        } else {
-                                            newServices[item.id] = 1;
-                                        }
-                                    }
-                                    field.onChange(newServices);
-                                };
-
-                                const handleQuantityChange = (newQuantity: number) => {
-                                    const maxQuantity = item.maxQuantity || 50;
-                                    if (newQuantity > maxQuantity) {
-                                        toast({ variant: 'destructive', title: `You can only book for ${maxQuantity} ${maxQuantity === 1 ? 'person' : 'people'} at most.`});
-                                        return;
-                                    };
-                                    
-                                    const newServices = { ...field.value };
-                                    if (newQuantity > 0) {
-                                        newServices[item.id] = newQuantity;
-                                    } else {
-                                        delete newServices[item.id];
-                                    }
-                                    field.onChange(newServices);
-                                };
-
                                 return (
                                     <ServiceCard
                                         key={item.id}
                                         service={item}
                                         isSelected={isSelected}
-                                        onSelect={handleSelect}
+                                        onSelect={() => {
+                                            let newServices = { ...field.value };
+                                            if (showPackagesOnly) {
+                                                newServices = {}; 
+                                                if (!isSelected) {
+                                                    newServices[item.id] = 1;
+                                                }
+                                            } else {
+                                                if (item.quantityEnabled) {
+                                                    if (!isSelected) {
+                                                        newServices[item.id] = 1;
+                                                    }
+                                                } else {
+                                                    if (isSelected) {
+                                                        delete newServices[item.id];
+                                                    } else {
+                                                        newServices[item.id] = 1;
+                                                    }
+                                                }
+                                            }
+                                            field.onChange(newServices);
+                                        }}
                                         quantity={quantity}
-                                        onQuantityChange={handleQuantityChange}
+                                        onQuantityChange={(newQuantity: number) => {
+                                            const maxQuantity = item.maxQuantity || 50;
+                                            if (newQuantity > maxQuantity) {
+                                                toast({ variant: 'destructive', title: `You can only book for ${maxQuantity} ${maxQuantity === 1 ? 'person' : 'people'} at most.`});
+                                                return;
+                                            };
+                                            
+                                            const newServices = { ...field.value };
+                                            if (newQuantity > 0) {
+                                                newServices[item.id] = newQuantity;
+                                            } else {
+                                                delete newServices[item.id];
+                                            }
+                                            field.onChange(newServices);
+                                        }}
                                         showPackagesOnly={showPackagesOnly}
                                     />
                                 );
@@ -736,7 +738,7 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
                         <p className="text-xs text-muted-foreground">{service.description}</p>
                     )}
                 </div>
-                 {isSelected && (service.quantityEnabled || showPackagesOnly === false) && !service.isPackage && (
+                 {isSelected && service.quantityEnabled && (
                     <div className="flex items-center justify-center gap-2 mt-4">
                         <Button size="icon" variant="outline" className="h-6 w-6" onClick={(e) => handleQuantityClick(e, quantity - 1)}>
                             <Minus className="h-4 w-4" />
@@ -761,3 +763,5 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
+
+    
