@@ -16,6 +16,7 @@ export interface AppUser {
   role: 'client' | 'admin' | 'staff';
   permissions?: StaffPermissions;
   enabled?: boolean;
+  homepageLayout?: string[];
 }
 
 export interface Service {
@@ -38,7 +39,7 @@ export interface Barber {
 }
 
 export interface Appointment {
-  id: string;
+  id:string;
   clientId: string;
   clientName: string | null;
   services: { id: string, name: string, price: number, duration: number, quantity: number }[];
