@@ -15,7 +15,7 @@ const formatUserDisplayName = (name: string | null | undefined, email: string | 
     return 'Guest';
 }
 
-export default function BookAppointmentPage() {
+export default function BookPage() {
   const { user } = useAuth();
   const { t } = useTranslation();
 
