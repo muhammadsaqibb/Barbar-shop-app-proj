@@ -13,7 +13,7 @@ import {
 import { useTranslation } from "@/context/language-provider";
 import type { AppUser } from "@/types";
 import type { Translations } from "@/context/language-provider";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { doc, updateDoc, deleteField } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -163,7 +163,8 @@ export default function Home() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
         activationConstraint: {
-            distance: 8,
+            delay: 250,
+            tolerance: 5,
         },
     }),
     useSensor(KeyboardSensor, {
@@ -296,7 +297,18 @@ export default function Home() {
 }
 
 
+interface ActionCardProps {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  disabled?: boolean;
+  isDraggable?: boolean;
+  isDragging?: boolean;
+}
+
 function SortableActionCard(props: ActionCardProps & { id: string }) {
+    const justDragged = useRef(false);
     const {
         attributes,
         listeners,
@@ -306,6 +318,12 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
         isDragging,
     } = useSortable({ id: props.id });
 
+    useEffect(() => {
+        if (isDragging) {
+          justDragged.current = true;
+        }
+    }, [isDragging]);
+
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
@@ -313,23 +331,22 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
         opacity: isDragging ? 0.8 : 1,
     };
 
+    const handleClick = (e: React.MouseEvent) => {
+        if (justDragged.current) {
+          e.preventDefault();
+          justDragged.current = false;
+        }
+    };
+
     return (
         <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab">
-            <ActionCard {...props} isDraggable={true} />
+            <ActionCard {...props} isDraggable={true} onClick={handleClick} />
         </div>
     );
 }
 
-interface ActionCardProps {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  disabled?: boolean;
-  isDraggable?: boolean;
-}
 
-function ActionCard({ href, icon, title, description, disabled, isDraggable }: ActionCardProps) {
+function ActionCard({ href, icon, title, description, disabled, isDraggable, onClick }: ActionCardProps & { onClick?: (e: React.MouseEvent) => void }) {
   const content = (
       <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${!isDraggable ? 'hover:animate-shake' : ''}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
@@ -354,7 +371,7 @@ function ActionCard({ href, icon, title, description, disabled, isDraggable }: A
   }
 
   return (
-    <Link href={href} className="flex h-full">
+    <Link href={href} className="flex h-full" onClick={onClick}>
         {content}
     </Link>
   );
