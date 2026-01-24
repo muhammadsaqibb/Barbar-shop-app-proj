@@ -91,7 +91,7 @@ export default function Header() {
       )}
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
-          <Link href="/admin/settings">Shop Settings</Link>
+          <Link href="/admin/settings">Opening Hours</Link>
         </Button>
       )}
     </>
@@ -189,15 +189,17 @@ export default function Header() {
                             </Link>
                         </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem>
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
+                    <DropdownMenuItem asChild>
+                        <Link href="/my-appointments">
+                            <UserIcon className="mr-2 h-4 w-4" />
+                            <span>Profile</span>
+                        </Link>
                     </DropdownMenuItem>
                     {user.role === 'admin' && (
                         <DropdownMenuItem asChild>
                             <Link href="/admin/settings">
                                 <Settings className="mr-2 h-4 w-4" />
-                                <span>Shop Settings</span>
+                                <span>Opening Hours</span>
                             </Link>
                         </DropdownMenuItem>
                     )}

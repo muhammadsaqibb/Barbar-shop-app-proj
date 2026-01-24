@@ -4,7 +4,7 @@
 import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn, Users, Settings } from "lucide-react";
+import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn, Users, Settings, User as UserIcon } from "lucide-react";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -79,8 +79,8 @@ export default function Home() {
                 <ActionCard
                     href="/admin/settings"
                     icon={<Settings className="h-6 w-6" />}
-                    title="Shop Settings"
-                    description="Configure operating hours."
+                    title="Opening Hours"
+                    description="Configure opening hours."
                 />
               )}
               {user?.role === 'admin' && (
@@ -104,6 +104,14 @@ export default function Home() {
                 title="History"
                 description="View your bookings."
               />
+              )}
+              {user?.role === 'client' && (
+                <ActionCard
+                  href="/my-appointments"
+                  icon={<UserIcon className="h-6 w-6" />}
+                  title="Profile"
+                  description="View your profile details."
+                />
               )}
               <ActionCard
                 href="/packages"
