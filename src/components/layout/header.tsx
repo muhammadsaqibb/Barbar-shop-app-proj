@@ -124,9 +124,9 @@ export default function Header() {
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
                 <div className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
+                <MobileLink href="/my-appointments" icon={<UserIcon />}>{t('profile')}</MobileLink>
                 <MobileLink href="/book" icon={<Scissors />}>{t('book_cut_title')}</MobileLink>
                 <MobileLink href="/packages" icon={<Package />}>{t('packages_title')}</MobileLink>
-                <MobileLink href="/my-appointments" icon={<UserIcon />}>{t('profile')}</MobileLink>
                 
                 {(user.role === 'admin' || (user.role === 'staff' && user.permissions?.canViewOverview)) && (
                     <MobileLink href="/overview" icon={<LayoutDashboard />}>{t('overview')}</MobileLink>
@@ -182,7 +182,7 @@ export default function Header() {
           <span className="font-bold font-headline uppercase whitespace-nowrap text-sm sm:text-base">{t('app_title')}</span>
         </Link>
         
-        <div className="hidden md:flex flex-1 items-center space-x-2 text-sm font-medium">
+        <div className="hidden md:flex items-center space-x-2 text-sm font-medium">
           {user && <NavLinks />}
         </div>
         

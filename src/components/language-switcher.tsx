@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useTranslation } from '@/context/language-provider';
@@ -12,7 +11,7 @@ export function LanguageSwitcher() {
       <Button
         variant={locale === 'en' ? 'secondary' : 'ghost'}
         size="sm"
-        className="h-7 px-3"
+        className="h-7 px-2"
         onClick={() => setLocale('en')}
       >
         EN
@@ -20,7 +19,7 @@ export function LanguageSwitcher() {
       <Button
         variant={locale === 'ur' ? 'secondary' : 'ghost'}
         size="sm"
-        className="h-7 px-3"
+        className="h-7 px-2"
         onClick={() => setLocale('ur')}
       >
         UR
