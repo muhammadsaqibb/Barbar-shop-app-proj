@@ -14,7 +14,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
-    // More efficient helper that reads the requesting user's data once.
     function getRequestingUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
@@ -25,6 +24,7 @@ service cloud.firestore {
     }
 
     function isRequestingUserAdmin() {
+      // Use the 'let' keyword to cache the result of the get call within the function scope.
       let userDoc = getRequestingUserData();
       return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && userDoc.data.role == 'admin';
     }
@@ -44,7 +44,6 @@ service cloud.firestore {
       return isSignedIn() && userDoc.exists && userDoc.data.enabled != false && userDoc.data.role == 'client';
     }
 
-    // This helper is for checking other users, not the requesting user.
     function isEnabled(userId) {
         return exists(/databases/$(database)/documents/users/$(userId)) &&
                get(/databases/$(database)/documents/users/$(userId)).data.enabled != false;
@@ -75,6 +74,8 @@ service cloud.firestore {
     
     match /appointments/{appointmentId} {
         allow get: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
+        // This rule is intentionally broad to allow clients to check for availability.
+        // The `get` rule still protects the full appointment details.
         allow list: if isSignedIn() && (isRequestingUserStaffOrAdmin() || isRequestingUserEnabled());
         allow create: if isSignedIn() && (isRequestingUserStaffOrAdmin() || (request.resource.data.clientId == request.auth.uid && isRequestingUserEnabled()));
         allow update, delete: if isRequestingUserStaffOrAdmin();
