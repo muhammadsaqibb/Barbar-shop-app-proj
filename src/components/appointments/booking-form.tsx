@@ -33,6 +33,7 @@ import { SeedServices } from '../admin/seed-services';
 import useSound from '@/hooks/use-sound';
 import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Label } from '../ui/label';
 
 const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
   services: z.record(z.string(), z.number().min(1)).refine((obj) => Object.keys(obj).length > 0, {
@@ -738,3 +739,5 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
+
+  
