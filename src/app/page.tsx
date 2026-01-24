@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/components/auth-provider";
@@ -310,11 +311,10 @@ function SortableActionCard(props: ActionCardProps & { id: string }) {
         transition,
         zIndex: isDragging ? 10 : 'auto',
         opacity: isDragging ? 0.8 : 1,
-        cursor: 'grab',
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none cursor-grab">
             <ActionCard {...props} isDraggable={true} />
         </div>
     );
@@ -331,7 +331,7 @@ interface ActionCardProps {
 
 function ActionCard({ href, icon, title, description, disabled, isDraggable }: ActionCardProps) {
   const content = (
-      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${isDraggable ? '' : 'hover:animate-shake'}`}>
+      <Card className={`group w-full h-full text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 relative ${disabled ? 'bg-muted/50' : 'bg-card hover:bg-card/95'} ${!isDraggable ? 'hover:animate-shake' : ''}`}>
       <CardContent className="p-4 flex flex-col items-center justify-center gap-3">
         <div className={`p-3 rounded-full bg-primary text-primary-foreground`}>
           {icon}
@@ -349,8 +349,8 @@ function ActionCard({ href, icon, title, description, disabled, isDraggable }: A
     </Card>
   );
 
-  if (disabled || isDraggable) {
-    return <div className={`h-full ${isDraggable ? 'cursor-grab' : 'cursor-not-allowed'}`}>{content}</div>
+  if (disabled) {
+    return <div className={`h-full cursor-not-allowed`}>{content}</div>
   }
 
   return (
