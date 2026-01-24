@@ -179,14 +179,14 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-2 flex items-center space-x-2 md:mr-6">
           <Logo />
-          <span className="font-bold font-headline uppercase whitespace-nowrap text-sm sm:text-base">{t('app_title')}</span>
+          <span className="font-bold font-headline uppercase whitespace-nowrap text-xs sm:text-sm">{t('app_title')}</span>
         </Link>
         
         <div className="hidden md:flex items-center space-x-2 text-sm font-medium">
           {user && <NavLinks />}
         </div>
         
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex-1 items-center justify-end space-x-2">
           <nav className="flex items-center gap-1 sm:gap-2">
             <LanguageSwitcher />
             <ModeToggle />
