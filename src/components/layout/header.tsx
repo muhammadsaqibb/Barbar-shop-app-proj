@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -115,6 +114,66 @@ export default function Header() {
     </SheetClose>
   );
 
+  const mobileMenuContent = (
+    <SheetContent className="w-[300px]" side="right">
+        <div className="flex flex-col h-full">
+        {user ? (
+            <>
+                <div className="p-4 border-b">
+                <p className="font-semibold">{user.name}</p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+                </div>
+                <div className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
+                <MobileLink href="/book" icon={<Scissors />}>{t('book_cut_title')}</MobileLink>
+                <MobileLink href="/packages" icon={<Package />}>{t('packages_title')}</MobileLink>
+                <MobileLink href="/my-appointments" icon={<UserIcon />}>{t('profile')}</MobileLink>
+                
+                {(user.role === 'admin' || (user.role === 'staff' && user.permissions?.canViewOverview)) && (
+                    <MobileLink href="/overview" icon={<LayoutDashboard />}>{t('overview')}</MobileLink>
+                )}
+
+                {(user.role === 'admin' || (user.role === 'staff' && user.permissions?.canViewBookings)) && (
+                    <MobileLink href="/admin/dashboard" icon={<BookCopy />}>{t('bookings')}</MobileLink>
+                )}
+
+                {user.role === 'admin' && (
+                    <>
+                    <div className="my-2 border-t -mx-4"></div>
+                    <p className="px-4 text-sm font-semibold text-muted-foreground">Admin</p>
+                    <MobileLink href="/admin/users" icon={<Users />}>{t('manage_users')}</MobileLink>
+                    <MobileLink href="/admin/barbers" icon={<Users />}>{t('manage_barbers')}</MobileLink>
+                    <MobileLink href="/admin/services" icon={<Sparkles />}>{t('manage_services')}</MobileLink>
+                    <MobileLink href="/admin/expenses" icon={<Receipt />}>{t('manage_expenses')}</MobileLink>
+                    <MobileLink href="/admin/settings" icon={<Settings />}>{t('opening_hours')}</MobileLink>
+                    </>
+                )}
+                </div>
+                <div className="p-4 border-t">
+                    <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>{t('logout')}</span>
+                    </Button>
+                </div>
+            </>
+        ) : (
+            <div className="p-4 flex flex-col items-center gap-4 mt-8">
+                <SheetClose asChild>
+                    <Button asChild className="w-full">
+                    <Link href="/login">{t('login')}</Link>
+                    </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                    <Button variant="outline" asChild className="w-full">
+                    <Link href="/register">{t('register')}</Link>
+                    </Button>
+                </SheetClose>
+            </div>
+        )}
+        </div>
+    </SheetContent>
+  );
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm text-foreground">
       <div className="container flex h-16 items-center">
@@ -220,70 +279,24 @@ export default function Header() {
                     )}
                 </div>
 
-                {/* Mobile: Hamburger Menu */}
+                {/* Mobile: Menu Trigger */}
                 <div className="md:hidden">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <Menu className="h-6 w-6" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent className="w-[300px]" side="right">
-                           <div className="flex flex-col h-full">
                             {user ? (
-                                <>
-                                 <div className="p-4 border-b">
-                                    <p className="font-semibold">{user.name}</p>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                 </div>
-                                 <div className="flex-1 p-4 flex flex-col gap-2 overflow-y-auto">
-                                    <MobileLink href="/book" icon={<Scissors />}>{t('book_cut_title')}</MobileLink>
-                                    <MobileLink href="/packages" icon={<Package />}>{t('packages_title')}</MobileLink>
-                                    <MobileLink href="/my-appointments" icon={<UserIcon />}>{t('profile')}</MobileLink>
-                                    
-                                    {(user.role === 'admin' || (user.role === 'staff' && user.permissions?.canViewOverview)) && (
-                                      <MobileLink href="/overview" icon={<LayoutDashboard />}>{t('overview')}</MobileLink>
-                                    )}
-
-                                    {(user.role === 'admin' || (user.role === 'staff' && user.permissions?.canViewBookings)) && (
-                                      <MobileLink href="/admin/dashboard" icon={<BookCopy />}>{t('bookings')}</MobileLink>
-                                    )}
-
-                                    {user.role === 'admin' && (
-                                      <>
-                                        <div className="my-2 border-t -mx-4"></div>
-                                        <p className="px-4 text-sm font-semibold text-muted-foreground">Admin</p>
-                                        <MobileLink href="/admin/users" icon={<Users />}>{t('manage_users')}</MobileLink>
-                                        <MobileLink href="/admin/barbers" icon={<Users />}>{t('manage_barbers')}</MobileLink>
-                                        <MobileLink href="/admin/services" icon={<Sparkles />}>{t('manage_services')}</MobileLink>
-                                        <MobileLink href="/admin/expenses" icon={<Receipt />}>{t('manage_expenses')}</MobileLink>
-                                        <MobileLink href="/admin/settings" icon={<Settings />}>{t('opening_hours')}</MobileLink>
-                                      </>
-                                    )}
-                                 </div>
-                                 <div className="p-4 border-t">
-                                     <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                                         <LogOut className="mr-2 h-4 w-4" />
-                                         <span>{t('logout')}</span>
-                                     </Button>
-                                 </div>
-                                </>
+                                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                                    <Avatar className="h-8 w-8">
+                                    <AvatarImage src={user.email || ''} alt={user.name || 'User'} />
+                                    <AvatarFallback>{user.name ? user.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
+                                    </Avatar>
+                                </Button>
                             ) : (
-                                <div className="p-4 flex flex-col items-center gap-4 mt-8">
-                                    <SheetClose asChild>
-                                      <Button asChild className="w-full">
-                                        <Link href="/login">{t('login')}</Link>
-                                      </Button>
-                                    </SheetClose>
-                                    <SheetClose asChild>
-                                      <Button variant="outline" asChild className="w-full">
-                                        <Link href="/register">{t('register')}</Link>
-                                      </Button>
-                                    </SheetClose>
-                                </div>
+                                <Button variant="ghost" size="icon">
+                                    <Menu className="h-6 w-6" />
+                                </Button>
                             )}
-                           </div>
-                        </SheetContent>
+                        </SheetTrigger>
+                        {mobileMenuContent}
                     </Sheet>
                 </div>
             </>
