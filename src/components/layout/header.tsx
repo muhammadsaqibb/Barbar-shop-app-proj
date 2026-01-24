@@ -24,6 +24,8 @@ import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import useSound from '@/hooks/use-sound';
 import { ModeToggle } from '../mode-toggle';
+import { useTranslation } from '@/context/language-provider';
+import { LanguageSwitcher } from '../language-switcher';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
@@ -31,6 +33,7 @@ export default function Header() {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const playSound = useSound();
+  const { t } = useTranslation();
 
   const pendingQuery = useMemoFirebase(() => {
     if (!firestore || (user?.role !== 'admin' && user?.role !== 'staff')) return null;
@@ -51,14 +54,14 @@ export default function Header() {
 
     if (pendingCount > prevPendingCount.current) {
         toast({
-            title: "New Booking Request",
-            description: "A new appointment is awaiting approval.",
+            title: t('new_booking_request'),
+            description: t('new_booking_description'),
         });
         playSound('notification');
     }
 
     prevPendingCount.current = pendingCount;
-  }, [pendingCount, toast, playSound]);
+  }, [pendingCount, toast, playSound, t]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -69,13 +72,13 @@ export default function Header() {
     <>
       {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewOverview)) && (
         <Button variant="ghost" asChild>
-          <Link href="/overview">Overview</Link>
+          <Link href="/overview">{t('overview')}</Link>
         </Button>
       )}
       {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
         <Button variant="ghost" asChild>
             <Link href="/admin/dashboard" className="relative">
-              Bookings
+              {t('bookings')}
               {pendingCount > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                   {pendingCount}
@@ -86,12 +89,12 @@ export default function Header() {
       )}
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
-          <Link href="/admin/users">Manage Users</Link>
+          <Link href="/admin/users">{t('manage_users')}</Link>
         </Button>
       )}
       {user?.role === 'admin' && (
         <Button variant="ghost" asChild>
-          <Link href="/admin/settings">Opening Hours</Link>
+          <Link href="/admin/settings">{t('opening_hours')}</Link>
         </Button>
       )}
     </>
@@ -100,10 +103,10 @@ export default function Header() {
   const AuthLinks = () => (
      <div className="flex items-center gap-2">
       <Button variant="ghost" asChild>
-        <Link href="/login">Login</Link>
+        <Link href="/login">{t('login')}</Link>
       </Button>
       <Button asChild>
-        <Link href="/register">Register</Link>
+        <Link href="/register">{t('register')}</Link>
       </Button>
     </div>
   )
@@ -113,7 +116,7 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <Logo />
-          <span className="font-bold font-headline uppercase">The Gentleman's Cut</span>
+          <span className="font-bold font-headline uppercase">{t('app_title')}</span>
         </Link>
         
         <div className="hidden md:flex flex-1 items-center space-x-2 text-sm font-medium">
@@ -122,6 +125,7 @@ export default function Header() {
         
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center gap-2">
+            <LanguageSwitcher />
             <ModeToggle />
             {loading ? (
               <div className="h-8 w-16 animate-pulse rounded-md bg-muted"></div>
@@ -148,7 +152,7 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                         <Link href="/admin/dashboard" className="relative">
                             <LayoutDashboard className="mr-2 h-4 w-4" />
-                            <span>Bookings Dashboard</span>
+                            <span>{t('bookings')}</span>
                             {pendingCount > 0 && (
                             <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
                                 {pendingCount}
@@ -161,7 +165,7 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                             <Link href="/admin/users">
                                 <Users className="mr-2 h-4 w-4" />
-                                <span>Manage Users</span>
+                                <span>{t('manage_users')}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
@@ -169,7 +173,7 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                             <Link href="/admin/barbers">
                                 <Users className="mr-2 h-4 w-4" />
-                                <span>Manage Barbers</span>
+                                <span>{t('manage_barbers')}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
@@ -177,7 +181,7 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                             <Link href="/admin/services">
                                 <Sparkles className="mr-2 h-4 w-4" />
-                                <span>Manage Services</span>
+                                <span>{t('manage_services')}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
@@ -185,28 +189,28 @@ export default function Header() {
                         <DropdownMenuItem asChild>
                             <Link href="/admin/expenses">
                                 <Receipt className="mr-2 h-4 w-4" />
-                                <span>Manage Expenses</span>
+                                <span>{t('manage_expenses')}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
                         <Link href="/my-appointments">
                             <UserIcon className="mr-2 h-4 w-4" />
-                            <span>Profile</span>
+                            <span>{t('profile')}</span>
                         </Link>
                     </DropdownMenuItem>
                     {user.role === 'admin' && (
                         <DropdownMenuItem asChild>
                             <Link href="/admin/settings">
                                 <Settings className="mr-2 h-4 w-4" />
-                                <span>Opening Hours</span>
+                                <span>{t('opening_hours')}</span>
                             </Link>
                         </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Log out</span>
+                        <span>{t('logout')}</span>
                     </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

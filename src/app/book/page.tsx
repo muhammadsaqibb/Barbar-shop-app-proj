@@ -4,6 +4,7 @@ import { useAuth } from "@/components/auth-provider";
 import BookingForm from "@/components/appointments/booking-form";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import ProtectedRoute from "@/components/protected-route";
+import { useTranslation } from "@/context/language-provider";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -16,6 +17,7 @@ const formatUserDisplayName = (name: string | null | undefined, email: string | 
 
 export default function BookAppointmentPage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const displayName = formatUserDisplayName(user?.name, user?.email);
 
@@ -26,10 +28,10 @@ export default function BookAppointmentPage() {
                 <Card className="shadow-lg border-border/20">
                 <CardHeader>
                     <CardTitle className="text-3xl font-headline text-center uppercase">
-                    Book Your Appointment
+                    {t('book_appointment_title')}
                     </CardTitle>
                     <CardDescription className="text-center text-muted-foreground pt-2">
-                     Welcome, {displayName}! Fill out the form below to schedule your visit.
+                     {t('book_appointment_desc', { name: displayName })}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

@@ -8,6 +8,7 @@ import { doc, query, collection, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import useSound from '@/hooks/use-sound';
 import SplashScreen from './layout/splash-screen';
+import { useTranslation } from '@/context/language-provider';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const playSound = useSound();
+  const { t } = useTranslation();
 
   // --- Effect to handle authentication state and user profile listening ---
   useEffect(() => {
@@ -46,8 +48,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                  setUser(null);
                  toast({
                     variant: 'destructive',
-                    title: 'Account Disabled',
-                    description: 'Your account has been disabled. Please contact an administrator.',
+                    title: t('account_disabled_title'),
+                    description: t('account_disabled_desc'),
                  });
               } else {
                 setUser({ uid: firebaseUser.uid, ...userData } as AppUser);
@@ -81,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         userDocUnsubscribe();
       }
     };
-  }, [auth, firestore, toast]);
+  }, [auth, firestore, toast, t]);
 
   // --- Effect for client appointment notifications ---
   useEffect(() => {
@@ -102,11 +104,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             let description = '';
 
             if (appointment.status === 'confirmed') {
-              title = 'Appointment Confirmed!';
-              description = `Your booking for ${appointment.date} at ${appointment.time} is confirmed.`;
+              title = t('appointment_confirmed_title');
+              description = t('appointment_confirmed_desc', { date: appointment.date, time: appointment.time });
             } else if (appointment.status === 'cancelled') {
-              title = 'Appointment Cancelled';
-              description = `Your booking for ${appointment.date} at ${appointment.time} has been cancelled.`;
+              title = t('appointment_cancelled_title');
+              description = t('appointment_cancelled_desc', { date: appointment.date, time: appointment.time });
             }
 
             if (title) {
@@ -119,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return () => appointmentsListener();
     }
-  }, [user, firestore, toast, playSound]);
+  }, [user, firestore, toast, playSound, t]);
 
   const signOut = async () => {
     try {

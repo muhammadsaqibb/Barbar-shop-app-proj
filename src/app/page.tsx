@@ -5,6 +5,7 @@ import { useAuth } from "@/components/auth-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Scissors, Sparkles, LayoutDashboard, Package, CalendarDays, BookCopy, Receipt, LogIn, Users, Settings, User as UserIcon } from "lucide-react";
+import { useTranslation } from "@/context/language-provider";
 
 const formatUserDisplayName = (name: string | null | undefined, email: string | null | undefined): string => {
     if (name) return name;
@@ -17,6 +18,7 @@ const formatUserDisplayName = (name: string | null | undefined, email: string | 
 
 export default function Home() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   
   const displayName = formatUserDisplayName(user?.name, user?.email);
 
@@ -25,10 +27,11 @@ export default function Home() {
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl font-headline uppercase">
-            The Gentleman's Cut
+            {t('app_headline')}
           </h1>
           <p className="mt-4 text-lg leading-8 text-muted-foreground">
-            {user ? `Welcome back, ${displayName}.` : 'Your next haircut is just a few clicks away.'} Ready for a fresh look?
+            {user ? t('welcome_back_user', { name: displayName }) : t('app_subheadline_logged_out')}{' '}
+            {t('ready_fresh_look')}
           </p>
         </div>
 
@@ -39,85 +42,85 @@ export default function Home() {
                 <ActionCard
                   href="/overview"
                   icon={<LayoutDashboard className="h-6 w-6" />}
-                  title="Overview"
-                  description="View key stats and charts."
+                  title={t('overview')}
+                  description={t('overview_desc')}
                 />
               )}
                {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
                 <ActionCard
                   href="/admin/dashboard"
                   icon={<BookCopy className="h-6 w-6" />}
-                  title="Bookings"
-                  description="Manage all appointments."
+                  title={t('bookings')}
+                  description={t('bookings_desc')}
                 />
               )}
               {user?.role === 'admin' && (
                 <ActionCard
                     href="/admin/users"
                     icon={<Users className="h-6 w-6" />}
-                    title="Manage Users"
-                    description="Edit roles and permissions."
+                    title={t('manage_users')}
+                    description={t('manage_users_desc')}
                 />
               )}
               {user?.role === 'admin' && (
                 <ActionCard
                     href="/admin/services"
                     icon={<Sparkles className="h-6 w-6" />}
-                    title="Manage Services"
-                    description="Edit prices and packages."
+                    title={t('manage_services')}
+                    description={t('manage_services_desc')}
                 />
               )}
               {user?.role === 'admin' && (
                 <ActionCard
                     href="/admin/barbers"
                     icon={<Users className="h-6 w-6" />}
-                    title="Manage Barbers"
-                    description="Add or edit barbers."
+                    title={t('manage_barbers')}
+                    description={t('manage_barbers_desc')}
                 />
               )}
                {user?.role === 'admin' && (
                 <ActionCard
                     href="/admin/settings"
                     icon={<Settings className="h-6 w-6" />}
-                    title="Opening Hours"
-                    description="Configure opening hours."
+                    title={t('opening_hours')}
+                    description={t('opening_hours_desc')}
                 />
               )}
               {user?.role === 'admin' && (
                 <ActionCard
                     href="/admin/expenses"
                     icon={<Receipt className="h-6 w-6" />}
-                    title="Manage Expenses"
-                    description="Add or track expenses."
+                    title={t('manage_expenses')}
+                    description={t('manage_expenses_desc')}
                 />
               )}
               <ActionCard
                 href="/book"
                 icon={<Scissors className="h-6 w-6" />}
-                title="Book Cut"
-                description="Schedule a new appointment."
+                title={t('book_cut_title')}
+                description={t('book_cut_desc')}
               />
               {user?.role === 'client' && (
                <ActionCard
                 href="/my-appointments"
                 icon={<CalendarDays className="h-6 w-6" />}
-                title="History"
-                description="View your bookings."
+                title={t('history_title')}
+                description={t('history_desc')}
               />
               )}
               {user?.role === 'client' && (
                 <ActionCard
                   href="/my-appointments"
                   icon={<UserIcon className="h-6 w-6" />}
-                  title="Profile"
-                  description="View your profile details."
+                  title={t('profile')}
+                  description={t('profile_desc')}
                 />
               )}
               <ActionCard
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}
-                title="Packages"
-                description="Check out our curated packages."
+                title={t('packages_title')}
+                description={t('packages_desc')}
               />
             </>
           ) : (
@@ -125,26 +128,20 @@ export default function Home() {
               <ActionCard
                 href="/book"
                 icon={<Scissors className="h-6 w-6" />}
-                title="Book Now"
-                description="Schedule an appointment."
+                title={t('book_now_title')}
+                description={t('book_now_desc')}
               />
                <ActionCard
                 href="/packages"
                 icon={<Package className="h-6 w-6" />}
-                title="View Packages"
-                description="Check out our curated packages."
+                title={t('view_packages_title')}
+                description={t('packages_desc')}
               />
                <ActionCard
                 href="/login"
                 icon={<LogIn className="h-6 w-6" />}
-                title="Login / Sign Up"
-                description="Access your account."
-              />
-               <ActionCard
-                href="/reviews"
-                icon={<Users className="h-6 w-6" />}
-                title="Client Reviews"
-                description="See what our clients say."
+                title={t('login_signup_title')}
+                description={t('login_signup_desc')}
               />
             </>
           )}

@@ -22,6 +22,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import type { AppUser } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/context/language-provider';
 
 const formSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -34,6 +35,7 @@ export default function RegisterForm() {
   const { toast } = useToast();
   const router = useRouter();
   const { auth, firestore } = useFirebase();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,14 +65,14 @@ export default function RegisterForm() {
       await setDoc(userDocRef, newUser);
 
       toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created.',
+        title: t('registration_success_title'),
+        description: t('registration_success_desc'),
       });
       router.push('/');
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Registration Failed',
+        title: t('registration_fail_title'),
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
@@ -87,7 +89,7 @@ export default function RegisterForm() {
             name="name"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t('name_label')}</FormLabel>
                 <FormControl>
                     <Input type="text" placeholder="John Doe" {...field} />
                 </FormControl>
@@ -100,7 +102,7 @@ export default function RegisterForm() {
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('email_label')}</FormLabel>
                 <FormControl>
                     <Input type="email" placeholder="name@example.com" {...field} />
                 </FormControl>
@@ -113,7 +115,7 @@ export default function RegisterForm() {
             name="password"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t('password_label')}</FormLabel>
                 <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
@@ -122,14 +124,14 @@ export default function RegisterForm() {
             )}
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account...</> : 'Create Account'}
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('creating_account_button')}</> : t('create_account_button')}
             </Button>
         </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-        Already have an account?{' '}
+        {t('already_have_account')}{' '}
         <Link href="/login" className="underline text-primary">
-            Sign in
+            {t('signin_link')}
         </Link>
         </div>
     </div>

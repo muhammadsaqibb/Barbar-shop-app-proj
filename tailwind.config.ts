@@ -20,6 +20,7 @@ export default {
         body: ['var(--font-lato)', 'sans-serif'],
         headline: ['var(--font-oswald)', 'sans-serif'],
         code: ['monospace'],
+        urdu: ['var(--font-noto-nastaliq-urdu)', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

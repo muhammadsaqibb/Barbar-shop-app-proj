@@ -34,6 +34,7 @@ import useSound from '@/hooks/use-sound';
 import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import { useTranslation } from '@/context/language-provider';
 
 const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
   services: z.record(z.string(), z.number().min(1)).refine((obj) => Object.keys(obj).length > 0, {
@@ -87,6 +88,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const playSound = useSound();
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dailyBookings, setDailyBookings] = useState<Appointment[]>([]);
   const [areSlotsLoading, setAreSlotsLoading] = useState(false);
@@ -250,16 +252,17 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
     let bookingClientId: string;
     let bookingClientName: string | null;
     let appointmentStatus: Appointment['status'] = 'pending';
-    let toastTitle = 'Appointment Request Sent!';
-    let toastDescription = `Your request for ${format(values.date, 'PPP')} at ${values.time} is pending approval.`;
+    let toastTitle = t('booking_success_title');
+    let toastDescription = t('booking_success_desc', { date: format(values.date, 'PPP'), time: values.time });
 
     if (isAdminOrStaff) {
         appointmentStatus = 'confirmed';
-        toastTitle = 'Appointment Created!';
-        toastDescription = `An appointment for ${format(values.date, 'PPP')} at ${values.time} has been successfully booked.`;
+        toastTitle = t('admin_booking_created_title');
+        
         if (values.customerType === 'walk-in') {
             bookingClientId = 'walk-in';
             bookingClientName = values.walkInName || 'Walk-in Client';
+            toastDescription = t('admin_booking_created_desc', { name: bookingClientName, date: format(values.date, 'PPP'), time: values.time });
         } else { // 'registered'
             const selectedCustomer = usersData?.find(u => u.uid === values.customerId);
             if (!selectedCustomer) {
@@ -269,7 +272,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             }
             bookingClientId = selectedCustomer.uid;
             bookingClientName = selectedCustomer.name || selectedCustomer.email;
-            toastDescription = `An appointment for ${bookingClientName} on ${format(values.date, 'PPP')} at ${values.time} has been booked.`;
+            toastDescription = t('admin_booking_created_desc', { name: bookingClientName, date: format(values.date, 'PPP'), time: values.time });
         }
     } else if (user) {
         bookingClientId = user.uid;
@@ -331,8 +334,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         .catch(() => {
             toast({
                 variant: 'destructive',
-                title: 'Booking Failed',
-                description: 'Could not save the appointment. Please try again.',
+                title: t('booking_fail_title'),
+                description: t('booking_fail_desc'),
             });
         })
         .finally(() => {
@@ -425,9 +428,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           render={({ field }) => (
             <FormItem>
               <div className="mb-4">
-                <FormLabel className="text-base">{showPackagesOnly ? 'Our Packages' : 'Services'}</FormLabel>
+                <FormLabel className="text-base">{showPackagesOnly ? t('packages_label') : t('services_label')}</FormLabel>
                 <FormDescription>
-                   {showPackagesOnly ? 'Select a package.' : 'Select one or more services.'}
+                   {showPackagesOnly ? t('select_package_desc') : t('select_service_desc')}
                 </FormDescription>
               </div>
 
@@ -435,7 +438,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                  <div className="relative mb-6">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder={`Search for ${showPackagesOnly ? 'packages' : 'services'}...`}
+                        placeholder={showPackagesOnly ? t('search_packages_placeholder') : t('search_services_placeholder')}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
@@ -508,7 +511,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                     {user?.role === 'admin' ? (
                         <SeedServices onSeed={refetchServices} />
                     ) : (
-                        <p className="text-center text-muted-foreground mt-4">No {showPackagesOnly ? 'packages' : 'services'} available at the moment.</p>
+                        <p className="text-center text-muted-foreground mt-4">{showPackagesOnly ? t('no_packages_available') : t('no_services_available')}</p>
                     )}
                   </div>
                 )}
@@ -523,7 +526,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             name="date"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
+                <FormLabel>{t('date_label')}</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -531,7 +534,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                         variant={'outline'}
                         className={cn('pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
                       >
-                        {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                        {field.value ? format(field.value, 'PPP') : <span>{t('pick_a_date')}</span>}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Button>
                     </FormControl>
@@ -555,7 +558,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             name="time"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Time</FormLabel>
+                <FormLabel>{t('time_label')}</FormLabel>
                 <Select onValueChange={field.onChange} value={field.value} disabled={areSlotsLoading || !watchedDate || allTimeSlots.length === 0}>
                   <FormControl>
                     <SelectTrigger>
@@ -564,10 +567,10 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                         shopSettingsLoading 
                           ? "Loading shop hours..."
                           : !watchedDate 
-                          ? "Select a date first" 
+                          ? t('select_date_first')
                           : areSlotsLoading 
-                          ? "Loading slots..." 
-                          : "Select a time"
+                          ? t('loading_slots')
+                          : t('select_a_time')
                       } />
                     </SelectTrigger>
                   </FormControl>
@@ -580,7 +583,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                       ))
                     ) : (
                       <SelectItem value="no-slots" disabled>
-                        {allTimeSlots.length > 0 ? 'No available slots for this day.' : 'Shop is closed on this day.'}
+                        {allTimeSlots.length > 0 ? t('no_available_slots') : 'Shop is closed on this day.'}
                       </SelectItem>
                     )}
                   </SelectContent>
@@ -596,7 +599,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           name="barberId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Barber (Optional)</FormLabel>
+              <FormLabel>{t('barber_label')}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -604,7 +607,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="any">Any Barber</SelectItem>
+                  <SelectItem value="any">{t('any_barber')}</SelectItem>
                    {barbersLoading && <SelectItem value="loading" disabled>Loading barbers...</SelectItem>}
                   {barbersData?.map((barber) => (
                     <SelectItem key={barber.id} value={barber.id}>
@@ -623,9 +626,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Notes for the Barber (Optional)</FormLabel>
+              <FormLabel>{t('notes_label')}</FormLabel>
               <FormControl>
-                <Textarea placeholder="Any specific requests or instructions?" {...field} />
+                <Textarea placeholder={t('notes_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -637,9 +640,9 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             name="paymentMethod"
             render={({ field }) => (
                 <FormItem className="space-y-3">
-                    <FormLabel>Payment Method</FormLabel>
+                    <FormLabel>{t('payment_method_label')}</FormLabel>
                     <FormDescription>
-                        Select how you'd like to pay for your appointment.
+                        {t('payment_method_desc')}
                     </FormDescription>
                     <FormControl>
                         <RadioGroup
@@ -652,8 +655,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                             <FormControl>
                                 <RadioGroupItem value="cash" className="sr-only" />
                             </FormControl>
-                            <span className="text-lg font-medium">Pay with Cash</span>
-                            <span className="text-xs text-muted-foreground">Pay in person at the shop.</span>
+                            <span className="text-lg font-medium">{t('pay_with_cash')}</span>
+                            <span className="text-xs text-muted-foreground">{t('pay_in_person')}</span>
                            </Label>
                         </FormItem>
                         <FormItem>
@@ -661,8 +664,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                             <FormControl>
                                 <RadioGroupItem value="online" className="sr-only"/>
                             </FormControl>
-                            <span className="text-lg font-medium">Pay Online</span>
-                            <span className="text-xs text-muted-foreground">Pay now with card (coming soon).</span>
+                            <span className="text-lg font-medium">{t('pay_online')}</span>
+                            <span className="text-xs text-muted-foreground">{t('pay_online_desc')}</span>
                            </Label>
                         </FormItem>
                         </RadioGroup>
@@ -676,8 +679,8 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
             <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <div className="p-6 flex flex-row items-center justify-between space-y-0">
                     <div className="grid gap-1.5">
-                        <h3 className="font-semibold tracking-tight">Total Amount</h3>
-                        <p className="text-sm text-muted-foreground">Final price for all selected services.</p>
+                        <h3 className="font-semibold tracking-tight">{t('total_amount_label')}</h3>
+                        <p className="text-sm text-muted-foreground">{t('total_amount_desc')}</p>
                     </div>
                     <div className="flex items-center gap-2">
                          <Wallet className="h-6 w-6 text-muted-foreground" />
@@ -688,7 +691,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
         )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-          {isSubmitting ? 'Submitting Request...' : 'Book Appointment'}
+          {isSubmitting ? t('submitting_request') : t('book_appointment_button')}
         </Button>
       </form>
     </Form>
@@ -758,5 +761,3 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
-
-  

@@ -21,6 +21,7 @@ import { useFirebase } from '@/firebase';
 import { signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
+import { useTranslation } from '@/context/language-provider';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -32,6 +33,7 @@ export default function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const { auth, firestore } = useFirebase();
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,20 +55,20 @@ export default function LoginForm() {
           await firebaseSignOut(auth);
           toast({
               variant: 'destructive',
-              title: 'Account Disabled',
-              description: 'Your account has been disabled. Please contact an administrator.',
+              title: t('account_disabled_title'),
+              description: t('account_disabled_desc'),
           });
       } else {
           toast({
-            title: 'Login Successful',
-            description: "Welcome back!",
+            title: t('login_success_title'),
+            description: t('login_success_desc'),
           });
           router.push('/');
       }
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
+        title: t('login_fail_title'),
         description: error.message || 'An unexpected error occurred.',
       });
     } finally {
@@ -83,7 +85,7 @@ export default function LoginForm() {
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t('email_label')}</FormLabel>
                 <FormControl>
                     <Input type="email" placeholder="name@example.com" {...field} />
                 </FormControl>
@@ -96,7 +98,7 @@ export default function LoginForm() {
             name="password"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>{t('password_label')}</FormLabel>
                 <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                 </FormControl>
@@ -105,14 +107,14 @@ export default function LoginForm() {
             )}
             />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing In...</> : 'Sign In'}
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('signing_in_button')}</> : t('signin_button')}
             </Button>
         </form>
         </Form>
         <div className="mt-4 text-center text-sm">
-        Don&apos;t have an account?{' '}
+        {t('dont_have_account')}{' '}
         <Link href="/register" className="underline text-primary">
-            Sign up
+            {t('signup_link')}
         </Link>
         </div>
     </div>
