@@ -24,7 +24,40 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { SeedBarbers } from './seed-barbers';
 import { Input } from '../ui/input';
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 
+const MobileBarberCard = ({ barber, onEdit, onDelete }: { barber: Barber, onEdit: (barber: Barber) => void, onDelete: (barberId: string) => void }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-lg">{barber.name}</CardTitle>
+            {barber.phone && <CardDescription>{barber.phone}</CardDescription>}
+        </CardHeader>
+        <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(barber)}>
+                <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the barber.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(barber.id)}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </CardFooter>
+    </Card>
+);
 
 export default function BarbersTable() {
   const { firestore } = useFirebase();
@@ -111,7 +144,25 @@ export default function BarbersTable() {
             Add Barber
         </Button>
     </div>
-    <div className="rounded-md border border-border/20">
+
+    {/* Mobile View */}
+    <div className="md:hidden space-y-4">
+        {filteredBarbers.length > 0 ? (
+            filteredBarbers.map((barber) => (
+                <MobileBarberCard
+                    key={barber.id}
+                    barber={barber}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            ))
+        ) : (
+              <div className="text-center h-24 py-10">No barbers found for "{searchTerm}".</div>
+        )}
+    </div>
+
+    {/* Desktop View */}
+    <div className="hidden md:block rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>

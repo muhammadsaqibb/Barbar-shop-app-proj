@@ -447,12 +447,12 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                )}
 
                 {servicesLoading ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-48 w-full" />)}
                   </div>
                 ) : itemsToDisplay.length > 0 ? (
                     filteredItemsToDisplay.length > 0 ? (
-                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {filteredItemsToDisplay.map((item) => {
                                 const quantity = field.value?.[item.id] || 0;
                                 const isSelected = quantity > 0;
@@ -687,8 +687,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                          <div className="text-2xl font-bold">PKR {totalPrice.toLocaleString()}</div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
           {isSubmitting ? t('submitting_request') : t('book_appointment_button')}

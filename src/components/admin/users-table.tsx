@@ -13,7 +13,41 @@ import { Edit, Settings } from 'lucide-react';
 import { StaffPermissionsDialog } from './staff-permissions-dialog';
 import { UserEditDialog } from './user-edit-dialog';
 import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 
+const MobileUserCard = ({ user, onEdit, onManagePermissions }: { user: AppUser, onEdit: (user: AppUser) => void, onManagePermissions: (user: AppUser) => void }) => (
+    <Card>
+        <CardHeader>
+            <div className="flex justify-between items-start">
+                <div>
+                    <CardTitle className="text-lg">{user.name}</CardTitle>
+                    <CardDescription>{user.email}</CardDescription>
+                </div>
+                 <Badge variant={user.enabled !== false ? 'default' : 'destructive'}>
+                    {user.enabled !== false ? 'Active' : 'Disabled'}
+                </Badge>
+            </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+             <div>
+                <h4 className="text-sm font-semibold mb-2">Role</h4>
+                <UserRoleUpdater user={user} />
+            </div>
+        </CardContent>
+        <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
+            {user.role === 'staff' && (
+                <Button variant="outline" size="sm" onClick={() => onManagePermissions(user)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Permissions
+                </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={() => onEdit(user)}>
+                <Edit className="h-4 w-4" />
+                <span className="sr-only">Edit User</span>
+            </Button>
+        </CardFooter>
+    </Card>
+);
 
 export default function UsersTable() {
   const { firestore } = useFirebase();
@@ -59,7 +93,20 @@ export default function UsersTable() {
 
   return (
     <>
-    <div className="rounded-md border border-border/20">
+      {/* Mobile View */}
+      <div className="md:hidden space-y-4">
+          {users.map((user) => (
+              <MobileUserCard
+                  key={user.id}
+                  user={user}
+                  onEdit={handleEditUser}
+                  onManagePermissions={handleManagePermissions}
+              />
+          ))}
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>
@@ -101,17 +148,17 @@ export default function UsersTable() {
                 ))}
             </TableBody>
         </Table>
-    </div>
-    <StaffPermissionsDialog 
-        isOpen={permissionsDialogOpen}
-        onOpenChange={setPermissionsDialogOpen}
-        user={selectedUser}
-    />
-     <UserEditDialog
-        isOpen={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        user={selectedUser}
-    />
+      </div>
+      <StaffPermissionsDialog 
+          isOpen={permissionsDialogOpen}
+          onOpenChange={setPermissionsDialogOpen}
+          user={selectedUser}
+      />
+      <UserEditDialog
+          isOpen={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          user={selectedUser}
+      />
     </>
   );
 }

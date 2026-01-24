@@ -11,6 +11,7 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import { format, addMinutes, parse } from 'date-fns';
 import PaymentStatusUpdater from './payment-status-updater';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 
 const formatTimeRange = (startTimeStr: string, dateStr: string, duration: number): string => {
     if (!startTimeStr || !dateStr || !duration) return startTimeStr;
@@ -22,6 +23,65 @@ const formatTimeRange = (startTimeStr: string, dateStr: string, duration: number
         console.error("Error formatting time range:", e);
         return startTimeStr;
     }
+};
+
+const MobileAppointmentCard = ({ appointment, onStatusChange }: { appointment: Appointment, onStatusChange: () => void }) => {
+    const getStatusVariant = (status: Appointment['status']) => {
+        switch (status) {
+          case 'pending': return 'secondary';
+          case 'confirmed': return 'default';
+          case 'cancelled': case 'no-show': return 'destructive';
+          case 'completed': return 'outline';
+          default: return 'outline';
+        }
+    };
+    
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg">{appointment.clientName}</CardTitle>
+                        <CardDescription>
+                            {appointment.clientId === 'walk-in' && <Badge variant="secondary" className="mr-2">Walk-In</Badge>}
+                             Booked By: {appointment.bookedBy || <Badge variant="outline">Online</Badge>}
+                        </CardDescription>
+                    </div>
+                    <Badge variant={getStatusVariant(appointment.status)} className="capitalize">{appointment.status}</Badge>
+                </div>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Date:</span>
+                    <span>{appointment.date}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Time:</span>
+                    <span>{formatTimeRange(appointment.time, appointment.date, appointment.totalDuration)}</span>
+                </div>
+                <div className="flex justify-between items-start">
+                    <span className="text-muted-foreground shrink-0 mr-2">Services:</span>
+                    <span className="text-right max-w-[70%] truncate">{appointment.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</span>
+                </div>
+                 <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total:</span>
+                    <span className="font-bold">PKR {appointment.totalPrice?.toLocaleString()} ({appointment.totalDuration} min)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Payment:</span>
+                    <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">{appointment.paymentMethod}</Badge>
+                        <div className="w-28">
+                             <PaymentStatusUpdater appointment={appointment} />
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter className="bg-muted/50 p-4 flex justify-end">
+                <AppointmentActions appointmentId={appointment.id} currentStatus={appointment.status} onStatusChange={onStatusChange} />
+            </CardFooter>
+        </Card>
+    );
 };
 
 export default function AppointmentsTable() {
@@ -92,7 +152,16 @@ export default function AppointmentsTable() {
   }
 
   return (
-    <div className="rounded-md border border-border/20">
+    <>
+      {/* Mobile View */}
+      <div className="md:hidden space-y-4">
+          {sortedAppointments.map((apt) => (
+              <MobileAppointmentCard key={apt.id} appointment={apt} onStatusChange={handleStatusChange} />
+          ))}
+      </div>
+
+      {/* Desktop View */}
+      <div className="hidden md:block rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>
@@ -142,6 +211,7 @@ export default function AppointmentsTable() {
                 ))}
             </TableBody>
         </Table>
-    </div>
+      </div>
+    </>
   );
 }

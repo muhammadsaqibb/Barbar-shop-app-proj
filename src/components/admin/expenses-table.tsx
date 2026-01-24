@@ -24,9 +24,56 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { DateRangePicker } from '../ui/date-range-picker';
 import type { DateRange } from 'react-day-picker';
+
+
+const MobileExpenseCard = ({ expense, onEdit, onDelete }: { expense: Expense, onEdit: (expense: Expense) => void, onDelete: (expenseId: string) => void }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="text-lg">{expense.name}</CardTitle>
+            <CardDescription>PKR {expense.amount?.toLocaleString()}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Date:</span>
+                <span>{expense.createdAt?.toDate ? format(expense.createdAt.toDate(), 'PPP') : 'N/A'}</span>
+            </div>
+            {expense.notes && (
+                <div>
+                    <h4 className="text-sm font-semibold">Notes</h4>
+                    <p className="text-sm text-muted-foreground truncate">{expense.notes}</p>
+                </div>
+            )}
+        </CardContent>
+        <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(expense)}>
+                <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the expense.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onDelete(expense.id)}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </CardFooter>
+    </Card>
+);
+
 
 export default function ExpensesTable() {
   const { firestore } = useFirebase();
@@ -193,7 +240,27 @@ export default function ExpensesTable() {
             <p className="text-muted-foreground">No expenses recorded yet.</p>
         </div>
     ) : (
-        <div className="rounded-md border border-border/20">
+      <>
+        {/* Mobile View */}
+        <div className="md:hidden space-y-4">
+            {filteredExpenses.length > 0 ? (
+                filteredExpenses.map((expense) => (
+                    <MobileExpenseCard 
+                        key={expense.id}
+                        expense={expense}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                    />
+                ))
+            ) : (
+                  <div className="text-center h-24 py-10">
+                    {hasActiveFilters ? `No expenses found for the selected criteria.` : `No expenses match "${searchTerm}".`}
+                </div>
+            )}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block rounded-md border border-border/20">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -250,6 +317,7 @@ export default function ExpensesTable() {
                 </TableBody>
             </Table>
         </div>
+      </>
     )}
     <ExpenseDialog
         isOpen={dialogOpen}

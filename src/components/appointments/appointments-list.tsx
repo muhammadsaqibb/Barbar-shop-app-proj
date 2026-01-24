@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -8,6 +9,45 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '../ui/skeleton';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+
+const MobileClientAppointmentCard = ({ appointment }: { appointment: Appointment }) => {
+    const getStatusVariant = (status: Appointment['status']) => {
+        switch (status) {
+          case 'pending': return 'secondary';
+          case 'confirmed': return 'default';
+          case 'cancelled': case 'no-show': return 'destructive';
+          case 'completed': return 'outline';
+          default: return 'outline';
+        }
+    };
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <CardTitle className="text-lg max-w-[80%] truncate">{appointment.services.map(s => `${s.name}${s.quantity && s.quantity > 1 ? ` x${s.quantity}` : ''}`).join(', ')}</CardTitle>
+                    <Badge variant={getStatusVariant(appointment.status)} className="capitalize">{appointment.status}</Badge>
+                </div>
+                 <CardDescription>
+                    {appointment.date} at {appointment.time}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Total Price:</span>
+                    <span className="font-bold">PKR {appointment.totalPrice?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment:</span>
+                     <Badge variant={appointment.paymentStatus === 'paid' ? 'default' : 'secondary'} className="capitalize">
+                        {appointment.paymentStatus}
+                    </Badge>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 export default function AppointmentsList() {
   const { user } = useAuth();
@@ -55,7 +95,16 @@ export default function AppointmentsList() {
   }
 
   return (
-    <div className="rounded-md border border-border/20">
+    <>
+      {/* Mobile View */}
+      <div className="md:hidden space-y-4">
+          {appointments.map((apt) => (
+              <MobileClientAppointmentCard key={apt.id} appointment={apt} />
+          ))}
+      </div>
+      
+      {/* Desktop View */}
+      <div className="hidden md:block rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>
@@ -88,6 +137,7 @@ export default function AppointmentsList() {
                 ))}
             </TableBody>
         </Table>
-    </div>
+      </div>
+    </>
   );
 }

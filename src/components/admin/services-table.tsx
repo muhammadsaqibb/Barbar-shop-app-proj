@@ -26,7 +26,79 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { SeedServices } from './seed-services';
 import { Input } from '../ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 
+const MobileServiceCard = ({ service, onToggle, onEdit, onDelete }: { service: Service, onToggle: (service: Service) => void, onEdit: (service: Service) => void, onDelete: (serviceId: string) => void }) => (
+    <Card>
+        <CardHeader>
+            <div className="flex justify-between items-start">
+                <CardTitle className="text-lg">{service.name}</CardTitle>
+                <Switch
+                    checked={service.enabled}
+                    onCheckedChange={() => onToggle(service)}
+                    aria-label="Toggle service enabled state"
+                />
+            </div>
+            <CardDescription>
+                <Badge variant={service.isPackage ? "default" : "secondary"}>
+                    {service.isPackage ? "Package" : "Service"}
+                </Badge>
+            </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Price:</span>
+                {service.discountedPrice && service.discountedPrice > 0 ? (
+                    <div className="flex flex-col items-end">
+                        <span className="line-through text-muted-foreground text-xs">PKR {service.price?.toLocaleString()}</span>
+                        <span className="font-bold">PKR {service.discountedPrice?.toLocaleString()}</span>
+                    </div>
+                ) : (
+                    <span className="font-bold">PKR {service.price?.toLocaleString()}</span>
+                )}
+            </div>
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Duration:</span>
+                <span>{service.duration} min</span>
+            </div>
+            <div className="flex justify-between">
+                <span className="text-muted-foreground">Quantity (Pax):</span>
+                {service.quantityEnabled ? (
+                    <Badge variant="secondary" className="flex items-center gap-1.5">
+                        <Users className="h-3 w-3" />
+                        <span>Enabled (Max {service.maxQuantity || 'N/A'})</span>
+                    </Badge>
+                ) : (
+                    <Badge variant="outline">Disabled</Badge>
+                )}
+            </div>
+        </CardContent>
+        <CardFooter className="bg-muted/50 p-2 flex justify-end gap-2">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(service)}>
+                <Edit className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the service.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onDelete(service.id)}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </CardFooter>
+    </Card>
+);
 
 export default function ServicesTable() {
   const { firestore } = useFirebase();
@@ -119,7 +191,26 @@ export default function ServicesTable() {
             Add Service
         </Button>
     </div>
-    <div className="rounded-md border border-border/20">
+
+    {/* Mobile View */}
+    <div className="md:hidden space-y-4">
+        {filteredServices.length > 0 ? (
+            filteredServices.map((service) => (
+                <MobileServiceCard 
+                    key={service.id}
+                    service={service}
+                    onToggle={handleToggleEnabled}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+            ))
+        ) : (
+            <div className="text-center h-24 py-10">No services found for "{searchTerm}".</div>
+        )}
+    </div>
+
+    {/* Desktop View */}
+    <div className="hidden md:block rounded-md border border-border/20">
         <Table>
             <TableHeader>
                 <TableRow>
