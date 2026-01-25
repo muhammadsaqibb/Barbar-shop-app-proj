@@ -345,7 +345,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-y-8">
         {isAdminOrStaff && (
           <div className='space-y-8 rounded-lg border p-4'>
                 <FormField
