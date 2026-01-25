@@ -177,12 +177,12 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm text-foreground">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-2 flex items-center space-x-2 md:mr-6">
+        <Link href="/" className="mr-2 flex items-center space-x-2 lg:mr-6">
           <Logo />
           <span className="font-bold font-headline uppercase whitespace-nowrap text-sm">{t('app_title')}</span>
         </Link>
         
-        <div className="hidden md:flex items-center space-x-2 text-sm font-medium">
+        <div className="hidden lg:flex items-center space-x-2 text-sm font-medium">
           {user && <NavLinks />}
         </div>
         
@@ -195,7 +195,7 @@ export default function Header() {
             ) : (
                 <>
                 {/* Desktop: Auth links or User Dropdown */}
-                <div className="hidden md:flex items-center gap-2">
+                <div className="hidden lg:flex items-center gap-2">
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -280,7 +280,7 @@ export default function Header() {
                 </div>
 
                 {/* Mobile: Menu Trigger */}
-                <div className="md:hidden">
+                <div className="lg:hidden">
                     <Sheet>
                         <SheetTrigger asChild>
                             {user ? (
