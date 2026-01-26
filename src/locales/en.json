@@ -1,6 +1,8 @@
 
 {
-    "app_title": "The Gentleman's Cut",
+    "app_title_line1": "The",
+    "app_title_line2": "Gent's",
+    "app_title_line3": "Cut",
     "app_description": "Online booking for your next haircut or shave.",
     "overview": "Overview",
     "bookings": "Bookings",

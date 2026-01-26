@@ -185,7 +185,11 @@ export default function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-2 flex items-center space-x-2 lg:mr-6">
           <Logo />
-          <span className="font-bold font-headline uppercase whitespace-nowrap text-sm">{t('app_title')}</span>
+          <div className="grid font-bold font-headline uppercase leading-tight text-xs text-center">
+            <span>{t('app_title_line1')}</span>
+            <span>{t('app_title_line2')}</span>
+            <span>{t('app_title_line3')}</span>
+          </div>
         </Link>
         
         <div className="hidden lg:flex items-center space-x-2 text-sm font-medium">
