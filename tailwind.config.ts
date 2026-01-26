@@ -105,16 +105,16 @@ export default {
         },
         'vibrate-reminder': {
             '0%, 4%, 100%': { transform: 'translateX(0) rotate(0)' },
-            '1%': { transform: 'translateX(-4px) rotate(-3deg)' },
-            '2%': { transform: 'translateX(4px) rotate(3deg)' },
-            '3%': { transform: 'translateX(-4px) rotate(-3deg)' },
+            '1%': { transform: 'translateX(-8px) rotate(-5deg)' },
+            '2%': { transform: 'translateX(8px) rotate(5deg)' },
+            '3%': { transform: 'translateX(-8px) rotate(-5deg)' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shake': 'shake 0.3s ease-in-out',
-        'vibrate-reminder': 'vibrate-reminder 30s ease-in-out infinite',
+        'vibrate-reminder': 'vibrate-reminder 5s ease-in-out infinite',
       },
     },
   },
