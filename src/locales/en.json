@@ -105,5 +105,15 @@
     "appointment_cancelled_title": "Appointment Cancelled",
     "appointment_cancelled_desc": "Your booking for {{date}} at {{time}} has been cancelled.",
     "admin_booking_created_title": "Appointment Created!",
-    "admin_booking_created_desc": "An appointment for {{name}} on {{date}} at {{time}} has been booked."
+    "admin_booking_created_desc": "An appointment for {{name}} on {{date}} at {{time}} has been booked.",
+    "link_account": "Link Account",
+    "link_account_page_title": "Payment Account",
+    "link_account_page_desc": "Link your bank account to display for online payment transfers.",
+    "account_number_label": "Bank Account Number",
+    "account_number_placeholder": "Enter your bank account number",
+    "save_account_button": "Save Account Number",
+    "saving_account_button": "Saving...",
+    "link_account_success_title": "Account Linked",
+    "link_account_success_desc": "The shop's account number has been saved.",
+    "link_account_fail_title": "Update Failed"
 }

@@ -1,5 +1,6 @@
 
 
+
 export interface StaffPermissions {
   canViewBookings: boolean;
   canAddWalkInBookings: boolean;
@@ -67,5 +68,6 @@ export interface ShopSettings {
   id?: string;
   openingTime: string; // e.g. "09:00"
   closingTime: string; // e.g. "18:00"
+  paymentAccountNumber?: string;
 }
     

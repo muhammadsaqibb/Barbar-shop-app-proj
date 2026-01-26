@@ -319,6 +319,10 @@
         "closingTime": {
           "type": "string",
           "description": "Shop closing time in HH:mm format (e.g., '18:00')."
+        },
+        "paymentAccountNumber": {
+            "type": "string",
+            "description": "The shop's bank account number for online payment transfers."
         }
       },
       "required": [

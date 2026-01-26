@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User as UserIcon, LayoutDashboard, Users, Sparkles, Receipt, Menu, BookCopy, Package, Scissors } from 'lucide-react';
+import { LogOut, Settings, User as UserIcon, LayoutDashboard, Users, Sparkles, Receipt, Menu, BookCopy, Package, Scissors, CreditCard } from 'lucide-react';
 import Logo from '../logo';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
@@ -147,6 +147,7 @@ export default function Header() {
                     <MobileLink href="/admin/services" icon={<Sparkles />}>{t('manage_services')}</MobileLink>
                     <MobileLink href="/admin/expenses" icon={<Receipt />}>{t('manage_expenses')}</MobileLink>
                     <MobileLink href="/admin/settings" icon={<Settings />}>{t('opening_hours')}</MobileLink>
+                    <MobileLink href="/admin/payment-settings" icon={<CreditCard />}>{t('link_account')}</MobileLink>
                     </>
                 )}
                 </div>
@@ -289,6 +290,12 @@ export default function Header() {
                                     <Link href="/admin/settings">
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>{t('opening_hours')}</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link href="/admin/payment-settings">
+                                        <CreditCard className="mr-2 h-4 w-4" />
+                                        <span>{t('link_account')}</span>
                                     </Link>
                                 </DropdownMenuItem>
                               </>

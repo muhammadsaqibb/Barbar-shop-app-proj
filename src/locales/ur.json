@@ -105,5 +105,15 @@
     "appointment_cancelled_title": "اپوائنٹمنٹ منسوخ",
     "appointment_cancelled_desc": "{{date}} کو {{time}} بجے کے لیے آپ کی بکنگ منسوخ کر دی گئی ہے۔",
     "admin_booking_created_title": "اپوائنٹمنٹ بنا دی گئی!",
-    "admin_booking_created_desc": "{{name}} کے لیے {{date}} کو {{time}} بجے کی اپوائنٹمنٹ بک کر دی گئی ہے۔"
+    "admin_booking_created_desc": "{{name}} کے لیے {{date}} کو {{time}} بجے کی اپوائنٹمنٹ بک کر دی گئی ہے۔",
+    "link_account": "اکاؤنٹ لنک کریں",
+    "link_account_page_title": "ادائیگی اکاؤنٹ",
+    "link_account_page_desc": "آن لائن ادائیگی کی منتقلی کے لیے اپنا بینک اکاؤنٹ لنک کریں۔",
+    "account_number_label": "بینک اکاؤنٹ نمبر",
+    "account_number_placeholder": "اپنا بینک اکاؤنٹ نمبر درج کریں",
+    "save_account_button": "اکاؤنٹ نمبر محفوظ کریں",
+    "saving_account_button": "محفوظ ہو رہا ہے...",
+    "link_account_success_title": "اکاؤنٹ لنک ہو گیا",
+    "link_account_success_desc": "دکان کا اکاؤنٹ نمبر محفوظ کر لیا گیا ہے۔",
+    "link_account_fail_title": "اپ ڈیٹ ناکام"
 }
