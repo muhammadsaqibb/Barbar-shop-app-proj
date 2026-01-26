@@ -319,15 +319,41 @@
         "closingTime": {
           "type": "string",
           "description": "Shop closing time in HH:mm format (e.g., '18:00')."
-        },
-        "paymentAccountNumber": {
-            "type": "string",
-            "description": "The shop's bank account number for online payment transfers."
         }
       },
       "required": [
         "openingTime",
         "closingTime"
+      ]
+    },
+    "PaymentMethod": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PaymentMethod",
+      "type": "object",
+      "description": "Represents a single payment method for the shop.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment method."
+        },
+        "methodName": {
+          "type": "string",
+          "description": "The name of the payment method (e.g., 'Easypaisa', 'HBL')."
+        },
+        "accountHolderName": {
+          "type": "string",
+          "description": "The name of the account holder."
+        },
+        "accountNumber": {
+          "type": "string",
+          "description": "The account number or identifier."
+        }
+      },
+      "required": [
+        "id",
+        "methodName",
+        "accountHolderName",
+        "accountNumber"
       ]
     }
   },
@@ -438,8 +464,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/shopSettings/{settingsId}/paymentMethods/{paymentMethodId}",
+        "definition": {
+          "entityName": "PaymentMethod",
+          "schema": {
+            "$ref": "#/backend/entities/PaymentMethod"
+          },
+          "description": "Stores the shop's various payment methods for online transfers.",
+          "params": [
+            {
+              "name": "settingsId",
+              "description": "The unique ID for the settings document (e.g., 'config')."
+            },
+            {
+              "name": "paymentMethodId",
+              "description": "The unique ID of the payment method."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support a simple appointment booking system with user authentication and role management. It prioritizes security and scalability by adhering to the principles of Authorization Independence and Structural Segregation. The structure uses path-based ownership for user-specific data (appointments) and separates user profiles from appointment data to simplify security rules and ensure data integrity. This design avoids using `get()` calls in security rules, enabling atomic operations and easier debugging. The `services` and `barbers` collections are top-level collections for easy querying and management by admins.\n\nAuthorization Independence:\nAppointments are stored under `/users/{userId}/appointments/{appointmentId}`, which allows direct ownership-based security rules without needing to fetch parent user data. The `clientId` field in the `Appointment` document is redundant but is kept to make querying for a specific client's appointments easier, if necessary, at the cost of data duplication.\n\nQAPs Support:\nThe structure supports QAPs (Rules are not Filters) effectively. List operations for appointments are scoped to the user's path (`/users/{userId}/appointments`), enabling secure listing of appointments associated with a specific user. The 'users' collection is segregated from the 'appointments' subcollection to ensure that listing users does not expose appointment data. Admins will require custom backend logic, the firestore structure is not aware of admin capabilities."
+    "reasoning": "The Firestore structure is designed to support a simple appointment booking system with user authentication and role management. It prioritizes security and scalability by adhering to the principles of Authorization Independence and Structural Segregation. The structure uses path-based ownership for user-specific data (appointments) and separates user profiles from appointment data to ensure data integrity. This design avoids using `get()` calls in security rules, enabling atomic operations and easier debugging. The `services` and `barbers` collections are top-level collections for easy querying and management by admins. Payment methods are stored as a subcollection of `shopSettings` for scalability.\n\nAuthorization Independence:\nAppointments are stored under `/users/{userId}/appointments/{appointmentId}`, which allows direct ownership-based security rules without needing to fetch parent user data. The `clientId` field in the `Appointment` document is redundant but is kept to make querying for a specific client's appointments easier, if necessary, at the cost of data duplication.\n\nQAPs Support:\nThe structure supports QAPs (Rules are not Filters) effectively. List operations for appointments are scoped to the user's path (`/users/{userId}/appointments`), enabling secure listing of appointments associated with a specific user. The 'users' collection is segregated from the 'appointments' subcollection to ensure that listing users does not expose appointment data. Admins will require custom backend logic, the firestore structure is not aware of admin capabilities."
   }
 }
