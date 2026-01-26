@@ -105,9 +105,9 @@ export default {
         },
         'vibrate-reminder': {
             '0%, 4%, 100%': { transform: 'translateX(0) rotate(0)' },
-            '1%': { transform: 'translateX(-2px) rotate(-1.5deg)' },
-            '2%': { transform: 'translateX(2px) rotate(1.5deg)' },
-            '3%': { transform: 'translateX(-2px) rotate(-1.5deg)' },
+            '1%': { transform: 'translateX(-4px) rotate(-3deg)' },
+            '2%': { transform: 'translateX(4px) rotate(3deg)' },
+            '3%': { transform: 'translateX(-4px) rotate(-3deg)' },
         }
       },
       animation: {
