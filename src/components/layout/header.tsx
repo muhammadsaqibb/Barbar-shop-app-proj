@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -192,6 +193,11 @@ export default function Header() {
         
         <div className="flex-1 flex items-center justify-end space-x-2">
           <nav className="flex items-center gap-1 sm:gap-2">
+             {user && (
+                <Button asChild className="lg:hidden" size="sm">
+                    <Link href="/book">{t('book_now_title')}</Link>
+                </Button>
+            )}
             <ModeToggle />
             {loading ? (
               <Skeleton className="h-8 w-8 rounded-full" />
