@@ -193,11 +193,18 @@ export default function Header() {
         
         <div className="flex-1 flex items-center justify-end space-x-2">
           <nav className="flex items-center gap-1 sm:gap-2">
-             {user && (
-                <Button asChild className="lg:hidden" size="sm">
-                    <Link href="/book">{t('book_now_title')}</Link>
+             {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
+                <Button asChild className="lg:hidden relative" variant="outline" size="sm">
+                    <Link href="/admin/dashboard">
+                        {t('bookings')}
+                        {pendingCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                                {pendingCount}
+                            </span>
+                        )}
+                    </Link>
                 </Button>
-            )}
+             )}
             <ModeToggle />
             {loading ? (
               <Skeleton className="h-8 w-8 rounded-full" />
