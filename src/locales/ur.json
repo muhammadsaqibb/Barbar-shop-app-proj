@@ -89,7 +89,7 @@
     "pay_with_cash": "نقد ادائیگی کریں",
     "pay_in_person": "دکان پر ذاتی طور پر ادائیگی کریں۔",
     "pay_online": "آن لائن ادائیگی کریں",
-    "pay_online_desc": "کارڈ کے ذریعے ابھی ادائیگی کریں (جلد آرہا ہے)۔",
+    "pay_online_desc": "نیچے دیے گئے ہمارے کسی ایک اکاؤنٹ میں ادائیگی منتقل کریں۔",
     "total_amount_label": "کل رقم",
     "total_amount_desc": "تمام منتخب خدمات کی حتمی قیمت۔",
     "book_appointment_button": "بک کریں",
@@ -124,5 +124,9 @@
     "method_deleted_success_title": "طریقہ حذف کر دیا گیا",
     "no_payment_methods": "ابھی تک کوئی ادائیگی کا طریقہ شامل نہیں کیا گیا ہے۔",
     "save_account_button": "محفوظ کریں",
-    "saving_account_button": "محفوظ ہو رہا ہے..."
+    "saving_account_button": "محفوظ ہو رہا ہے...",
+    "no_online_payment_methods": "کوئی آن لائن ادائیگی کا طریقہ ترتیب نہیں دیا گیا ہے۔ براہ کرم 'نقد ادائیگی' منتخب کریں۔",
+    "accounts_for_transfer": "آن لائن منتقلی کے لیے اکاؤنٹس"
 }
+
+    

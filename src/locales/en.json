@@ -89,7 +89,7 @@
     "pay_with_cash": "Pay with Cash",
     "pay_in_person": "Pay in person at the shop.",
     "pay_online": "Pay Online",
-    "pay_online_desc": "Pay now with card (coming soon).",
+    "pay_online_desc": "Pay by bank transfer to one of the accounts below.",
     "total_amount_label": "Total Amount",
     "total_amount_desc": "Final price for all selected services.",
     "book_appointment_button": "Book",
@@ -124,5 +124,9 @@
     "method_deleted_success_title": "Method Deleted",
     "no_payment_methods": "No payment methods have been added yet.",
     "save_account_button": "Save",
-    "saving_account_button": "Saving..."
+    "saving_account_button": "Saving...",
+    "no_online_payment_methods": "No online payment methods are configured. Please select 'Pay with Cash'.",
+    "accounts_for_transfer": "Accounts for Online Transfer"
 }
+
+    

@@ -17,11 +17,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Scissors, Star, Check, Loader2, Search, Plus, Minus, Wallet } from 'lucide-react';
+import { CalendarIcon, Scissors, Star, Check, Loader2, Search, Plus, Minus, Wallet, Banknote, User, Hash } from 'lucide-react';
 import { format, addMinutes, parse } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useMemo } from 'react';
-import type { Service, Barber, AppUser, Appointment, ShopSettings } from '@/types';
+import type { Service, Barber, AppUser, Appointment, ShopSettings, PaymentMethod } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '../ui/card';
 import { useCollection, useFirebase, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
@@ -35,6 +35,7 @@ import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { useTranslation } from '@/context/language-provider';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const bookingFormSchema = (isAdminOrStaff: boolean) => z.object({
   services: z.record(z.string(), z.number().min(1)).refine((obj) => Object.keys(obj).length > 0, {
@@ -111,6 +112,12 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const shopSettingsRef = useMemoFirebase(() => firestore ? doc(firestore, 'shopSettings', 'config') : null, [firestore]);
   const { data: shopSettings, isLoading: shopSettingsLoading } = useDoc<ShopSettings>(shopSettingsRef);
 
+  const paymentMethodsRef = useMemoFirebase(
+    () => (firestore ? collection(doc(firestore, 'shopSettings', 'config'), 'paymentMethods') : null),
+    [firestore]
+  );
+  const { data: paymentMethods, isLoading: paymentMethodsLoading } = useCollection<PaymentMethod>(paymentMethodsRef);
+
   const formSchema = bookingFormSchema(isAdminOrStaff);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -130,6 +137,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
   const watchedDate = form.watch('date');
   const watchedServices = form.watch('services');
   const watchedCustomerType = form.watch('customerType');
+  const watchedPaymentMethod = form.watch('paymentMethod');
 
   const allTimeSlots = useMemo(() => {
     if (shopSettingsLoading) return [];
@@ -645,7 +653,7 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                         className="grid grid-cols-2 gap-4"
                         >
                         <FormItem>
-                           <Label className="has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                           <Label className="has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex h-full flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer">
                             <FormControl>
                                 <RadioGroupItem value="cash" className="sr-only" />
                             </FormControl>
@@ -654,9 +662,12 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                            </Label>
                         </FormItem>
                         <FormItem>
-                            <Label className="has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                            <Label className={cn(
+                                "has-[input:checked]:ring-2 has-[input:checked]:ring-primary has-[input:checked]:border-primary flex h-full flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                                (!paymentMethods || paymentMethods.length === 0) && "cursor-not-allowed opacity-50"
+                            )}>
                             <FormControl>
-                                <RadioGroupItem value="online" className="sr-only"/>
+                                <RadioGroupItem value="online" className="sr-only" disabled={!paymentMethods || paymentMethods.length === 0}/>
                             </FormControl>
                             <span className="text-lg font-medium">{t('pay_online')}</span>
                             <span className="text-xs text-muted-foreground">{t('pay_online_desc')}</span>
@@ -665,6 +676,47 @@ export default function BookingForm({ showPackagesOnly = false }: BookingFormPro
                         </RadioGroup>
                     </FormControl>
                     <FormMessage />
+                    {watchedPaymentMethod === 'online' && (
+                        <div className="pt-4 space-y-4">
+                            <h3 className="text-lg font-semibold">{t('accounts_for_transfer')}</h3>
+                            {paymentMethodsLoading ? (
+                                <Skeleton className="h-24 w-full" />
+                            ) : paymentMethods && paymentMethods.length > 0 ? (
+                                <Accordion type="single" collapsible className="w-full" defaultValue={paymentMethods[0].id}>
+                                    {paymentMethods.map(method => (
+                                        <AccordionItem key={method.id} value={method.id}>
+                                            <AccordionTrigger>
+                                                <div className="flex items-center gap-2">
+                                                    <Banknote className="h-5 w-5" />
+                                                    <span className="font-semibold">{method.methodName}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent className="space-y-4 pt-4">
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <User className="h-4 w-4 text-muted-foreground" />
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Account Holder</div>
+                                                        <div className="font-medium">{method.accountHolderName}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3 text-sm">
+                                                    <Hash className="h-4 w-4 text-muted-foreground" />
+                                                    <div>
+                                                        <div className="text-xs text-muted-foreground">Account Number</div>
+                                                        <div className="font-mono">{method.accountNumber}</div>
+                                                    </div>
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            ) : (
+                                <div className="text-center text-sm text-muted-foreground p-4 border rounded-md">
+                                    {t('no_online_payment_methods')}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </FormItem>
             )}
         />
@@ -755,3 +807,5 @@ function ServiceCard({ service, isSelected, onSelect, quantity, onQuantityChange
         </Card>
     )
 }
+
+    
