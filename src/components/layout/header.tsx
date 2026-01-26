@@ -26,6 +26,7 @@ import { ModeToggle } from '../mode-toggle';
 import { useTranslation } from '@/context/language-provider';
 import { LanguageSwitcher } from '../language-switcher';
 import { Skeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function Header() {
   const { user, loading, signOut } = useAuth();
@@ -76,7 +77,7 @@ export default function Header() {
         </Button>
       )}
       {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
-        <Button variant="ghost" asChild>
+        <Button variant="ghost" asChild className={cn(pendingCount > 0 && "animate-vibrate-reminder")}>
             <Link href="/admin/dashboard" className="relative">
               {t('bookings')}
               {pendingCount > 0 && (
@@ -193,8 +194,8 @@ export default function Header() {
         
         <div className="flex-1 flex items-center justify-end space-x-2">
           <nav className="flex items-center gap-1 sm:gap-2">
-             {(user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
-                <Button asChild className="lg:hidden relative" variant="outline" size="sm">
+             {user && (user?.role === 'admin' || (user?.role === 'staff' && user.permissions?.canViewBookings)) && (
+                <Button asChild className={cn("lg:hidden relative", pendingCount > 0 && "animate-vibrate-reminder")} variant="outline" size="sm">
                     <Link href="/admin/dashboard">
                         {t('bookings')}
                         {pendingCount > 0 && (
@@ -203,6 +204,11 @@ export default function Header() {
                             </span>
                         )}
                     </Link>
+                </Button>
+             )}
+             {user && user.role === 'client' && (
+                 <Button asChild variant="outline" size="sm" className="lg:hidden">
+                    <Link href="/book">Book Now</Link>
                 </Button>
              )}
             <ModeToggle />

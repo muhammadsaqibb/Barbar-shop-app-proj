@@ -102,12 +102,19 @@ export default {
           '50%': { transform: 'rotate(-1.5deg)' },
           '75%': { transform: 'rotate(1.0deg)' },
           '100%': { transform: 'rotate(0.0deg)' },
+        },
+        'vibrate-reminder': {
+            '0%, 100%': { transform: 'translateX(0)' },
+            '25%': { transform: 'translateX(-1px) rotate(-0.5deg)' },
+            '50%': { transform: 'translateX(1px) rotate(0.5deg)' },
+            '75%': { transform: 'translateX(-1px) rotate(-0.5deg)' },
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'shake': 'shake 0.3s ease-in-out',
+        'vibrate-reminder': 'vibrate-reminder 1.5s ease-in-out infinite',
       },
     },
   },
