@@ -1,3 +1,4 @@
+'use client';
 
 import AdminRoute from "@/components/admin/admin-route";
 import LinkAccountSettings from "@/components/admin/link-account-settings";
