@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogOut, Settings, User as UserIcon, LayoutDashboard, Users, Sparkles, Receipt, Menu, BookCopy, Package, Scissors, CreditCard } from 'lucide-react';
 import Logo from '../logo';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '../ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetTitle, SheetDescription } from '../ui/sheet';
 import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { useEffect, useRef } from 'react';
@@ -118,6 +118,8 @@ export default function Header() {
 
   const mobileMenuContent = (
     <SheetContent className="w-[300px]" side="right">
+        <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+        <SheetDescription className="sr-only">A list of navigation links and user actions.</SheetDescription>
         <div className="flex flex-col h-full">
         {user ? (
             <>
