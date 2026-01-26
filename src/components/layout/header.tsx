@@ -148,7 +148,11 @@ export default function Header() {
                     </>
                 )}
                 </div>
-                <div className="p-4 border-t">
+                <div className="p-4 border-t space-y-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Language</span>
+                        <LanguageSwitcher />
+                    </div>
                     <Button variant="outline" className="w-full" onClick={handleSignOut}>
                         <LogOut className="mr-2 h-4 w-4" />
                         <span>{t('logout')}</span>
@@ -188,7 +192,6 @@ export default function Header() {
         
         <div className="flex-1 flex items-center justify-end space-x-2">
           <nav className="flex items-center gap-1 sm:gap-2">
-            <LanguageSwitcher />
             <ModeToggle />
             {loading ? (
               <Skeleton className="h-8 w-8 rounded-full" />
@@ -267,6 +270,13 @@ export default function Header() {
                                 </DropdownMenuItem>
                               </>
                             )}
+                            <DropdownMenuSeparator />
+                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="p-0 focus:bg-transparent">
+                                <div className="flex w-full items-center justify-between px-2 py-1.5">
+                                    <span className="text-sm text-muted-foreground">Language</span>
+                                    <LanguageSwitcher />
+                                </div>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleSignOut}>
                                 <LogOut className="mr-2 h-4 w-4" />
